@@ -1,16 +1,26 @@
 package com.odom.moodlight.ui.navigation
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.screen.light.LightScreen
 import com.odom.moodlight.ui.screen.settings.SettingsScreen
 import com.odom.moodlight.ui.screen.sound.SoundScreen
@@ -24,11 +34,19 @@ sealed class Screen(val route: String, val emoji: String, val label: String) {
 
 private val screens = listOf(Screen.Light, Screen.Sound, Screen.Settings)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val navBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStack?.destination?.route
+    val activity = LocalContext.current as? Activity
+
+    var showExitSheet by remember { mutableStateOf(false) }
+
+    BackHandler {
+        showExitSheet = true
+    }
 
     Scaffold(
         containerColor = AppColors.Background,
@@ -64,6 +82,51 @@ fun AppNavigation() {
             composable(Screen.Light.route) { LightScreen() }
             composable(Screen.Sound.route) { SoundScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
+        }
+    }
+
+    if (showExitSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showExitSheet = false },
+            containerColor = AppColors.Panel
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "앱을 종료할까요?",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AppColors.TextPrimary
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "아이의 수면 환경이 꺼집니다",
+                    fontSize = 14.sp,
+                    color = AppColors.TextDim
+                )
+                Spacer(Modifier.height(20.dp))
+                AdBannerView(modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = { activity?.finish() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.SoftPink.copy(alpha = 0.8f))
+                ) {
+                    Text("종료", color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showExitSheet = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("계속 사용", color = AppColors.TextPrimary, fontSize = 16.sp)
+                }
+            }
         }
     }
 }

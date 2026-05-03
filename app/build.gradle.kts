@@ -65,6 +65,7 @@ dependencies {
 //    implementation("androidx.compose.ui:ui-text-google-fonts")
 
 
+    implementation(libs.play.ads)
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

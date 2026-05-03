@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.ui.component.BrightnessSlider
 import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
@@ -158,6 +159,12 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             onStart = { minutes ->
                 viewModel.startTimer(minutes)
                 showTimerSheet = false
+                (context as? Activity)?.let { act ->
+                    val manager = ReviewManagerFactory.create(act)
+                    manager.requestReviewFlow().addOnSuccessListener { reviewInfo ->
+                        manager.launchReviewFlow(act, reviewInfo)
+                    }
+                }
             }
         )
     }

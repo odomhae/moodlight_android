@@ -20,6 +20,7 @@ billingKtx = "7.0.0"
 reviewKtx = "2.0.1"
 uiTextGoogleFonts = "1.6.7"
 coroutinesAndroid = "1.8.0"
+playAds = "23.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -48,6 +49,7 @@ billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", versi
 play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "reviewKtx" }
 compose-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutinesAndroid" }
+play-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playAds" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

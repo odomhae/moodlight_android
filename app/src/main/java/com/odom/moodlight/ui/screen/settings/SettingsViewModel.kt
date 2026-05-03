@@ -29,6 +29,10 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _showPaywall = MutableStateFlow(false)
+    private var iconChangeCount = 0
+
+    private val _showInterstitialAd = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val showInterstitialAd: SharedFlow<Unit> = _showInterstitialAd.asSharedFlow()
 
     private data class ExtraState(
         val language: String,
@@ -66,13 +70,33 @@ class SettingsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
+    private fun onIconChanged() {
+        iconChangeCount++
+        if (iconChangeCount % 3 == 0) {
+            _showInterstitialAd.tryEmit(Unit)
+        }
+    }
+
+    fun selectEmojiPreset(index: Int) {
+        onIconChanged()
+        viewModelScope.launch {
+            settingsRepository.setCustomIconPath("")
+            settingsRepository.setEmojiIndex(index)
+        }
+    }
+
     fun setColorIndex(v: Int) = viewModelScope.launch { settingsRepository.setColorIndex(v) }
     fun setBrightness(v: Float) = viewModelScope.launch { settingsRepository.setBrightness(v) }
     fun setOrientation(v: String) = viewModelScope.launch { settingsRepository.setOrientation(v) }
     fun setAutoRestore(v: Boolean) = viewModelScope.launch { settingsRepository.setAutoRestore(v) }
     fun setLanguage(v: String) = viewModelScope.launch { settingsRepository.setLanguage(v) }
     fun setEmojiIndex(v: Int) = viewModelScope.launch { settingsRepository.setEmojiIndex(v) }
-    fun setCustomIconPath(path: String) = viewModelScope.launch { settingsRepository.setCustomIconPath(path) }
+
+    fun setCustomIconPath(path: String) {
+        onIconChanged()
+        viewModelScope.launch { settingsRepository.setCustomIconPath(path) }
+    }
+
     fun clearCustomIcon() = viewModelScope.launch { settingsRepository.setCustomIconPath("") }
     fun showPaywall() = _showPaywall.update { true }
     fun dismissPaywall() = _showPaywall.update { false }

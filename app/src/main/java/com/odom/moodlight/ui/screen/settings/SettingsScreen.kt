@@ -1,5 +1,6 @@
 package com.odom.moodlight.ui.screen.settings
 
+import android.app.Activity
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,13 +19,19 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.play.core.review.ReviewManagerFactory
+import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
@@ -37,8 +44,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     var showOrientationMenu by remember { mutableStateOf(false) }
-    val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
+    val activity = context as? Activity
     val coroutineScope = rememberCoroutineScope()
     var cameraFile by remember { mutableStateOf<File?>(null) }
 
@@ -49,6 +56,39 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 try { BitmapFactory.decodeFile(state.customIconPath)?.asImageBitmap() } catch (e: Exception) { null }
             }
         } else null
+    }
+
+    // 전면 광고 관리
+    var interstitialAd by remember { mutableStateOf<InterstitialAd?>(null) }
+
+    fun loadInterstitialAd() {
+        InterstitialAd.load(
+            context,
+            INTERSTITIAL_AD_UNIT_ID,
+            AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(ad: InterstitialAd) { interstitialAd = ad }
+                override fun onAdFailedToLoad(error: LoadAdError) { interstitialAd = null }
+            }
+        )
+    }
+
+    LaunchedEffect(Unit) { loadInterstitialAd() }
+
+    LaunchedEffect(Unit) {
+        viewModel.showInterstitialAd.collect {
+            val ad = interstitialAd
+            if (ad != null && activity != null) {
+                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        interstitialAd = null
+                        loadInterstitialAd()
+                    }
+                }
+                ad.show(activity)
+                interstitialAd = null
+            }
+        }
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -79,7 +119,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         Text("설정", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
         Spacer(Modifier.height(16.dp))
 
-        // PRO 배너 (비 PRO 사용자)
         if (!state.isPro) {
             Card(
                 modifier = Modifier
@@ -103,7 +142,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         }
 
         SettingSection(title = "중앙 아이콘") {
-            // 이모지 프리셋
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -111,16 +149,12 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 listOf("🌙", "👶", "🌟", "🐑", "🦋").forEachIndexed { index, emoji ->
                     FilterChip(
                         selected = state.customIconPath == null && state.emojiIndex == index,
-                        onClick = {
-                            viewModel.clearCustomIcon()
-                            viewModel.setEmojiIndex(index)
-                        },
+                        onClick = { viewModel.selectEmojiPreset(index) },
                         label = { Text(emoji, fontSize = 20.sp) }
                     )
                 }
             }
             Spacer(Modifier.height(8.dp))
-            // 카메라 / 앨범
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -143,7 +177,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     Text("🖼️ 앨범", color = AppColors.TextPrimary)
                 }
             }
-            // 커스텀 이미지 미리보기
             if (customBitmap != null) {
                 Spacer(Modifier.height(8.dp))
                 Row(
@@ -215,11 +248,16 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         HorizontalDivider(color = AppColors.Border, modifier = Modifier.padding(vertical = 8.dp))
 
-        SettingClickRow("개인정보 처리방침") {
-            uriHandler.openUri("https://yourapp.com/privacy")
-        }
+        SettingClickRow("개인정보 처리방침") {}
 
-        SettingClickRow("리뷰 남기기") {}
+        SettingClickRow("리뷰 남기기") {
+            activity?.let { act ->
+                val manager = ReviewManagerFactory.create(act)
+                manager.requestReviewFlow().addOnSuccessListener { reviewInfo ->
+                    manager.launchReviewFlow(act, reviewInfo)
+                }
+            }
+        }
 
         SettingRow(title = "앱 버전", subtitle = state.appVersion) {}
 
