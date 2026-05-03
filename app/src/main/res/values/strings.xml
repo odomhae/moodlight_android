@@ -2,6 +2,5 @@
     <string name="app_name">아기 야간등</string>
     <string name="tab_light">조명</string>
     <string name="tab_sound">사운드</string>
-    <string name="tab_timer">타이머</string>
     <string name="tab_settings">설정</string>
 </resources>

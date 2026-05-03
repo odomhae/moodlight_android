@@ -13,6 +13,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 import javax.inject.Inject
 
 data class LightUiState(
@@ -40,6 +41,9 @@ class LightViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(LightUiState())
     val state: StateFlow<LightUiState> = _state.asStateFlow()
+
+    private val _exitApp = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val exitApp: SharedFlow<Unit> = _exitApp.asSharedFlow()
 
     private val emojis = listOf("🌙", "👶", "🌟", "🐑", "🦋")
     private var emojiIndex = 0
@@ -142,7 +146,9 @@ class LightViewModel @Inject constructor(
                 remaining--
                 _state.update { it.copy(timerRemainingSeconds = remaining) }
             }
+            soundPlayer.stopAll()
             _state.update { it.copy(isTimerRunning = false) }
+            _exitApp.tryEmit(Unit)
         }
     }
 

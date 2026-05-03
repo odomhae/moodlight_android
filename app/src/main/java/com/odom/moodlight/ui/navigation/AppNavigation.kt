@@ -14,17 +14,15 @@ import androidx.navigation.compose.rememberNavController
 import com.odom.moodlight.ui.screen.light.LightScreen
 import com.odom.moodlight.ui.screen.settings.SettingsScreen
 import com.odom.moodlight.ui.screen.sound.SoundScreen
-import com.odom.moodlight.ui.screen.timer.TimerScreen
 import com.odom.moodlight.ui.theme.AppColors
 
 sealed class Screen(val route: String, val emoji: String, val label: String) {
     data object Light : Screen("light", "💡", "조명")
     data object Sound : Screen("sound", "🎵", "사운드")
-    data object Timer : Screen("timer", "⏱️", "타이머")
     data object Settings : Screen("settings", "⚙️", "설정")
 }
 
-private val screens = listOf(Screen.Light, Screen.Sound, Screen.Timer, Screen.Settings)
+private val screens = listOf(Screen.Light, Screen.Sound, Screen.Settings)
 
 @Composable
 fun AppNavigation() {
@@ -65,7 +63,6 @@ fun AppNavigation() {
         ) {
             composable(Screen.Light.route) { LightScreen() }
             composable(Screen.Sound.route) { SoundScreen() }
-            composable(Screen.Timer.route) { TimerScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
     }

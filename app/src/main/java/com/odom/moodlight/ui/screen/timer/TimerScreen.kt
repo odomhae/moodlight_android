@@ -1,6 +1,8 @@
 package com.odom.moodlight.ui.screen.timer
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +24,7 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -29,13 +32,16 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
         Text("타이머", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
         Spacer(Modifier.height(24.dp))
 
-        // 원형 프로그레스 + 남은 시간
+        // 원형 프로그레스 + 시간 표시
         Box(contentAlignment = Alignment.Center) {
             TimerArcProgress(progress = state.progress, size = 240.dp)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val h = state.remainingSeconds / 3600
-                val m = (state.remainingSeconds % 3600) / 60
-                val s = state.remainingSeconds % 60
+                // 실행 중이면 남은 시간, 아니면 설정된 시간 표시
+                val displaySeconds = if (state.isRunning) state.remainingSeconds
+                                     else (state.hours * 3600 + state.minutes * 60)
+                val h = displaySeconds / 3600
+                val m = (displaySeconds % 3600) / 60
+                val s = displaySeconds % 60
                 Text(
                     text = if (h > 0) "%02d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s),
                     style = MaterialTheme.typography.headlineLarge,
@@ -50,7 +56,7 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
         Spacer(Modifier.height(24.dp))
 
         if (!state.isRunning) {
-            // 프리셋 버튼
+            // 프리셋 버튼 - 클릭 시 시간 즉시 설정
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(15 to "15분", 30 to "30분", 60 to "1시간", 120 to "2시간").forEach { (min, label) ->
                     FilterChip(
@@ -115,10 +121,13 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
             }
 
             Spacer(Modifier.height(24.dp))
+
+            // 시작 버튼
             Button(
                 onClick = viewModel::startTimer,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow)
+                colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow),
+                enabled = (state.hours * 3600 + state.minutes * 60) > 0
             ) {
                 Text("시작", color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
@@ -130,5 +139,7 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
                 Text("취소", color = AppColors.TextPrimary)
             }
         }
+
+        Spacer(Modifier.height(24.dp))
     }
 }

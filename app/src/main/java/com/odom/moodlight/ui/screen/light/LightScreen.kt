@@ -8,14 +8,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -23,12 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.odom.moodlight.data.model.SoundType
-import com.odom.moodlight.ui.component.*
+import com.odom.moodlight.ui.component.LightOrb
+import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.theme.AppColors
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
@@ -36,6 +30,13 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     val context = LocalContext.current
 
     KeepScreenOn()
+
+    // 타이머 종료 시 앱 종료
+    LaunchedEffect(Unit) {
+        viewModel.exitApp.collect {
+            (context as? Activity)?.finishAndRemoveTask()
+        }
+    }
 
     val animatedColor by animateColorAsState(
         targetValue = state.lightColor,
@@ -49,95 +50,62 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
         label = "brightness"
     )
 
+    var showTimerSheet by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColors.Background)
             .alpha(animatedBrightness)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // 조명 영역 (70%)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.7f)
-                    .background(animatedColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    LightOrb(
-                        color = animatedColor,
-                        emoji = state.emoji,
-                        size = 200.dp,
-                        onEmojiTap = viewModel::nextEmoji
+        // 배경 색상 오버레이
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(animatedColor.copy(alpha = 0.15f))
+        )
+
+        // 타이머 (상단)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 16.dp)
+        ) {
+            if (state.isTimerRunning) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "⏱️ " + formatTimer(state.timerRemainingSeconds),
+                        fontSize = 20.sp,
+                        color = AppColors.WarmYellow,
+                        fontWeight = FontWeight.SemiBold
                     )
-                    if (state.showClock) {
-                        Spacer(Modifier.height(24.dp))
-                        ClockDisplay()
-                    }
-                    if (state.isCycleMode) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "🌈 색상 사이클 모드 중",
-                            fontSize = 13.sp,
-                            color = AppColors.TextDim
-                        )
+                    TextButton(onClick = viewModel::cancelTimer) {
+                        Text("취소", color = AppColors.TextDim, fontSize = 13.sp)
                     }
                 }
-            }
-
-            // 컨트롤 패널 (30%)
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.3f),
-                color = AppColors.Panel.copy(alpha = 0.95f)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ColorPickerRow(
-                        selectedIndex = state.colorIndex,
-                        isCycleMode = state.isCycleMode,
-                        onColorSelect = viewModel::selectColor,
-                        onCycleSelect = viewModel::toggleCycleMode
-                    )
-
-                    BrightnessSlider(
-                        brightness = state.brightness,
-                        onBrightnessChange = viewModel::setBrightness
-                    )
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        items(SoundType.entries) { sound ->
-                            SoundChip(
-                                sound = sound,
-                                isActive = state.activeSound == sound,
-                                isPro = state.isPro,
-                                onClick = { viewModel.toggleSound(sound) }
-                            )
-                        }
-                    }
-
-                    ActionButtonRow(
-                        sleepMode = state.sleepMode,
-                        showClock = state.showClock,
-                        isTimerRunning = state.isTimerRunning,
-                        timerRemainingSeconds = state.timerRemainingSeconds,
-                        onToggleSleep = viewModel::toggleSleepMode,
-                        onToggleClock = viewModel::toggleClock,
-                        onStartTimer = viewModel::startTimer,
-                        onCancelTimer = viewModel::cancelTimer
+            } else {
+                TextButton(onClick = { showTimerSheet = true }) {
+                    Text(
+                        text = "⏱️ 타이머",
+                        fontSize = 16.sp,
+                        color = AppColors.TextDim
                     )
                 }
             }
         }
+
+        // 조명 (중앙)
+        LightOrb(
+            color = animatedColor,
+            emoji = state.emoji,
+            size = 240.dp,
+            onEmojiTap = viewModel::nextEmoji,
+            modifier = Modifier.align(Alignment.Center)
+        )
 
         // 수면 모드 터치 차단
         if (state.sleepMode) {
@@ -151,6 +119,16 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
         }
     }
 
+    if (showTimerSheet) {
+        TimerBottomSheet(
+            onDismiss = { showTimerSheet = false },
+            onStart = { minutes ->
+                viewModel.startTimer(minutes)
+                showTimerSheet = false
+            }
+        )
+    }
+
     if (state.showPaywall) {
         PaywallBottomSheet(
             products = emptyList(),
@@ -160,109 +138,26 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     }
 }
 
-@Composable
-private fun ClockDisplay() {
-    val time = remember { mutableStateOf(LocalTime.now()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            time.value = LocalTime.now()
-            kotlinx.coroutines.delay(1000)
-        }
-    }
-    Text(
-        text = time.value.format(DateTimeFormatter.ofPattern("HH:mm")),
-        fontSize = 48.sp,
-        fontWeight = FontWeight.Light,
-        color = AppColors.TextPrimary
-    )
-    Text(
-        text = LocalDate.now().format(DateTimeFormatter.ofPattern("E, MMM d")),
-        fontSize = 14.sp,
-        color = AppColors.TextDim
-    )
-}
-
-@Composable
-private fun ActionButtonRow(
-    sleepMode: Boolean,
-    showClock: Boolean,
-    isTimerRunning: Boolean,
-    timerRemainingSeconds: Int,
-    onToggleSleep: () -> Unit,
-    onToggleClock: () -> Unit,
-    onStartTimer: (Int) -> Unit,
-    onCancelTimer: () -> Unit
-) {
-    var showTimerSheet by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        ActionButton(
-            emoji = "⏱️",
-            label = if (isTimerRunning) formatTimer(timerRemainingSeconds) else "타이머",
-            isActive = isTimerRunning,
-            onClick = { if (isTimerRunning) onCancelTimer() else showTimerSheet = true }
-        )
-        ActionButton(
-            emoji = "🕐",
-            label = "시계",
-            isActive = showClock,
-            onClick = onToggleClock
-        )
-        ActionButton(
-            emoji = "💤",
-            label = "수면",
-            isActive = sleepMode,
-            onClick = onToggleSleep
-        )
-    }
-
-    if (showTimerSheet) {
-        TimerBottomSheet(
-            onDismiss = { showTimerSheet = false },
-            onStart = { minutes ->
-                onStartTimer(minutes)
-                showTimerSheet = false
-            }
-        )
-    }
-}
-
 private fun formatTimer(seconds: Int): String {
-    val m = seconds / 60
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
     val s = seconds % 60
-    return "%02d:%02d".format(m, s)
-}
-
-@Composable
-private fun ActionButton(
-    emoji: String,
-    label: String,
-    isActive: Boolean,
-    onClick: () -> Unit
-) {
-    TextButton(onClick = onClick) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = emoji,
-                fontSize = 22.sp,
-                color = if (isActive) AppColors.WarmYellow else AppColors.TextDim
-            )
-            Text(
-                text = label,
-                fontSize = 11.sp,
-                color = if (isActive) AppColors.WarmYellow else AppColors.TextDim
-            )
-        }
-    }
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
-    val presets = listOf(15, 30, 60, 120)
+    val presets = listOf(
+        15 to "15분",
+        30 to "30분",
+        60 to "1시간",
+        120 to "2시간",
+        180 to "3시간",
+        240 to "4시간",
+        300 to "5시간",
+        360 to "6시간"
+    )
     var selectedMinutes by remember { mutableIntStateOf(30) }
 
     ModalBottomSheet(
@@ -272,27 +167,57 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("타이머 설정", fontSize = 18.sp, color = AppColors.TextPrimary, fontWeight = FontWeight.SemiBold)
+            Text(
+                "타이머 설정",
+                fontSize = 18.sp,
+                color = AppColors.TextPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
             Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                presets.forEach { min ->
+
+            // 첫 번째 줄: 15분 ~ 2시간
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                presets.take(4).forEach { (min, label) ->
                     FilterChip(
                         selected = selectedMinutes == min,
                         onClick = { selectedMinutes = min },
-                        label = { Text(if (min < 60) "${min}분" else "${min / 60}시간") }
+                        label = { Text(label, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            // 두 번째 줄: 3시간 ~ 6시간
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                presets.drop(4).forEach { (min, label) ->
+                    FilterChip(
+                        selected = selectedMinutes == min,
+                        onClick = { selectedMinutes = min },
+                        label = { Text(label, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = { onStart(selectedMinutes) },
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow)
             ) {
-                Text("시작", color = AppColors.Background, fontWeight = FontWeight.Bold)
+                Text("시작", color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
