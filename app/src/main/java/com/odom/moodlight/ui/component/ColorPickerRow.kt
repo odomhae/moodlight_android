@@ -96,6 +96,15 @@ private fun RainbowDot(isSelected: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = "🌈", fontSize = 18.sp)
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.7f),
+                modifier = Modifier.size(18.dp)
+            )
+        } else {
+            Text(text = "🌈", fontSize = 18.sp)
+        }
     }
 }

@@ -4,7 +4,6 @@ import android.graphics.BitmapFactory
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -17,7 +16,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -31,7 +29,6 @@ fun LightOrb(
     emoji: String,
     customIconPath: String? = null,
     size: Dp = 200.dp,
-    onEmojiTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "orb")
@@ -99,13 +96,11 @@ fun LightOrb(
             )
         }
 
-        val tapModifier = Modifier.pointerInput(Unit) { detectTapGestures { onEmojiTap() } }
-
         if (imageBitmap != null) {
             Image(
                 bitmap = imageBitmap!!,
                 contentDescription = null,
-                modifier = tapModifier
+                modifier = Modifier
                     .size(size * 0.55f)
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
@@ -113,8 +108,7 @@ fun LightOrb(
         } else {
             Text(
                 text = emoji,
-                fontSize = (size.value * 0.3f).sp,
-                modifier = tapModifier
+                fontSize = (size.value * 0.3f).sp
             )
         }
     }

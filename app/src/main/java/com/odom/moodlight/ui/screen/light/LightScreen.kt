@@ -8,6 +8,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +35,6 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
 
     KeepScreenOn()
 
-    // 타이머 종료 시 앱 종료
     LaunchedEffect(Unit) {
         viewModel.exitApp.collect {
             (context as? Activity)?.finishAndRemoveTask()
@@ -53,6 +54,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     )
 
     var showTimerSheet by remember { mutableStateOf(false) }
+    var showControlSheet by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -60,7 +62,6 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             .background(AppColors.Background)
             .alpha(animatedBrightness)
     ) {
-        // 배경 색상 오버레이
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -106,28 +107,23 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             emoji = state.emoji,
             customIconPath = state.customIconPath,
             size = 240.dp,
-            onEmojiTap = viewModel::nextEmoji,
             modifier = Modifier.align(Alignment.Center)
         )
 
-        // 색상 및 밝기 컨트롤 (하단)
+        // 컨트롤 열기 버튼 (하단)
         if (!state.sleepMode) {
-            Column(
+            IconButton(
+                onClick = { showControlSheet = true },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp)
             ) {
-                ColorPickerRow(
-                    selectedIndex = state.colorIndex,
-                    isCycleMode = state.isCycleMode,
-                    onColorSelect = viewModel::selectColor,
-                    onCycleSelect = viewModel::toggleCycleMode
-                )
-                BrightnessSlider(
-                    brightness = state.brightness,
-                    onBrightnessChange = viewModel::setBrightness
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "색상 및 밝기 조절",
+                    tint = AppColors.TextDim,
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
@@ -142,6 +138,18 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     }
             )
         }
+    }
+
+    if (showControlSheet) {
+        ControlBottomSheet(
+            selectedIndex = state.colorIndex,
+            isCycleMode = state.isCycleMode,
+            brightness = state.brightness,
+            onColorSelect = viewModel::selectColor,
+            onCycleSelect = viewModel::toggleCycleMode,
+            onBrightnessChange = viewModel::setBrightness,
+            onDismiss = { showControlSheet = false }
+        )
     }
 
     if (showTimerSheet) {
@@ -160,6 +168,49 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             onDismiss = viewModel::dismissPaywall,
             onPurchase = {}
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ControlBottomSheet(
+    selectedIndex: Int,
+    isCycleMode: Boolean,
+    brightness: Float,
+    onColorSelect: (Int) -> Unit,
+    onCycleSelect: () -> Unit,
+    onBrightnessChange: (Float) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = AppColors.Panel
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                "색상 및 밝기",
+                fontSize = 16.sp,
+                color = AppColors.TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            ColorPickerRow(
+                selectedIndex = selectedIndex,
+                isCycleMode = isCycleMode,
+                onColorSelect = onColorSelect,
+                onCycleSelect = onCycleSelect
+            )
+            BrightnessSlider(
+                brightness = brightness,
+                onBrightnessChange = onBrightnessChange
+            )
+        }
     }
 }
 
@@ -205,7 +256,6 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
             )
             Spacer(Modifier.height(16.dp))
 
-            // 첫 번째 줄: 1분 ~ 30분
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -222,7 +272,6 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
 
             Spacer(Modifier.height(8.dp))
 
-            // 두 번째 줄: 1시간 ~ 3시간
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -239,7 +288,6 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
 
             Spacer(Modifier.height(8.dp))
 
-            // 세 번째 줄: 4시간 ~ 6시간
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
