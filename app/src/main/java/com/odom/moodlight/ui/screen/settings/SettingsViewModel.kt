@@ -15,6 +15,8 @@ data class SettingsUiState(
     val orientation: String = "portrait",
     val autoRestore: Boolean = true,
     val language: String = "ko",
+    val emojiIndex: Int = 0,
+    val customIconPath: String? = null,
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
     val appVersion: String = "1.0",
@@ -28,23 +30,39 @@ class SettingsViewModel @Inject constructor(
 
     private val _showPaywall = MutableStateFlow(false)
 
+    private data class ExtraState(
+        val language: String,
+        val emojiIndex: Int,
+        val customIconPath: String?,
+        val isPro: Boolean,
+        val showPaywall: Boolean
+    )
+
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.colorIndex,
         settingsRepository.brightness,
         settingsRepository.orientation,
         settingsRepository.autoRestore,
-        combine(settingsRepository.language, billingRepository.isPro, _showPaywall) { lang, isPro, paywall ->
-            Triple(lang, isPro, paywall)
+        combine(
+            settingsRepository.language,
+            settingsRepository.emojiIndex,
+            settingsRepository.customIconPath,
+            billingRepository.isPro,
+            _showPaywall
+        ) { lang, emojiIdx, customPath, isPro, paywall ->
+            ExtraState(lang, emojiIdx, customPath, isPro, paywall)
         }
-    ) { colorIdx, brightness, orientation, autoRestore, (language, isPro, showPaywall) ->
+    ) { colorIdx, brightness, orientation, autoRestore, extra ->
         SettingsUiState(
             colorIndex = colorIdx,
             brightness = brightness,
             orientation = orientation,
             autoRestore = autoRestore,
-            language = language,
-            isPro = isPro,
-            showPaywall = showPaywall
+            language = extra.language,
+            emojiIndex = extra.emojiIndex,
+            customIconPath = extra.customIconPath,
+            isPro = extra.isPro,
+            showPaywall = extra.showPaywall
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
@@ -53,6 +71,9 @@ class SettingsViewModel @Inject constructor(
     fun setOrientation(v: String) = viewModelScope.launch { settingsRepository.setOrientation(v) }
     fun setAutoRestore(v: Boolean) = viewModelScope.launch { settingsRepository.setAutoRestore(v) }
     fun setLanguage(v: String) = viewModelScope.launch { settingsRepository.setLanguage(v) }
+    fun setEmojiIndex(v: Int) = viewModelScope.launch { settingsRepository.setEmojiIndex(v) }
+    fun setCustomIconPath(path: String) = viewModelScope.launch { settingsRepository.setCustomIconPath(path) }
+    fun clearCustomIcon() = viewModelScope.launch { settingsRepository.setCustomIconPath("") }
     fun showPaywall() = _showPaywall.update { true }
     fun dismissPaywall() = _showPaywall.update { false }
 }

@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.odom.moodlight.ui.component.BrightnessSlider
+import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
 import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.theme.AppColors
@@ -102,10 +104,33 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
         LightOrb(
             color = animatedColor,
             emoji = state.emoji,
+            customIconPath = state.customIconPath,
             size = 240.dp,
             onEmojiTap = viewModel::nextEmoji,
             modifier = Modifier.align(Alignment.Center)
         )
+
+        // 색상 및 밝기 컨트롤 (하단)
+        if (!state.sleepMode) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ColorPickerRow(
+                    selectedIndex = state.colorIndex,
+                    isCycleMode = state.isCycleMode,
+                    onColorSelect = viewModel::selectColor,
+                    onCycleSelect = viewModel::toggleCycleMode
+                )
+                BrightnessSlider(
+                    brightness = state.brightness,
+                    onBrightnessChange = viewModel::setBrightness
+                )
+            }
+        }
 
         // 수면 모드 터치 차단
         if (state.sleepMode) {
@@ -149,6 +174,7 @@ private fun formatTimer(seconds: Int): String {
 @Composable
 private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
     val presets = listOf(
+        1 to "1분",
         15 to "15분",
         30 to "30분",
         60 to "1시간",
@@ -179,12 +205,12 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
             )
             Spacer(Modifier.height(16.dp))
 
-            // 첫 번째 줄: 15분 ~ 2시간
+            // 첫 번째 줄: 1분 ~ 30분
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                presets.take(4).forEach { (min, label) ->
+                presets.take(3).forEach { (min, label) ->
                     FilterChip(
                         selected = selectedMinutes == min,
                         onClick = { selectedMinutes = min },
@@ -196,12 +222,29 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
 
             Spacer(Modifier.height(8.dp))
 
-            // 두 번째 줄: 3시간 ~ 6시간
+            // 두 번째 줄: 1시간 ~ 3시간
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                presets.drop(4).forEach { (min, label) ->
+                presets.drop(3).take(3).forEach { (min, label) ->
+                    FilterChip(
+                        selected = selectedMinutes == min,
+                        onClick = { selectedMinutes = min },
+                        label = { Text(label, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // 세 번째 줄: 4시간 ~ 6시간
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                presets.drop(6).forEach { (min, label) ->
                     FilterChip(
                         selected = selectedMinutes == min,
                         onClick = { selectedMinutes = min },

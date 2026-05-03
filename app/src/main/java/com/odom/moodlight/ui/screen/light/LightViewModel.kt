@@ -23,6 +23,7 @@ data class LightUiState(
     val isCycleMode: Boolean = false,
     val activeSound: SoundType? = null,
     val emoji: String = "🌙",
+    val customIconPath: String? = null,
     val showClock: Boolean = true,
     val sleepMode: Boolean = false,
     val timerMinutes: Int = 0,
@@ -46,7 +47,7 @@ class LightViewModel @Inject constructor(
     val exitApp: SharedFlow<Unit> = _exitApp.asSharedFlow()
 
     private val emojis = listOf("🌙", "👶", "🌟", "🐑", "🦋")
-    private var emojiIndex = 0
+    private var currentEmojiIndex = 0
     private var cycleIndex = 0
     private var cycleJob: Job? = null
     private var timerJob: Job? = null
@@ -69,6 +70,17 @@ class LightViewModel @Inject constructor(
                         isPro = isPro
                     )
                 }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.emojiIndex.collect { idx ->
+                currentEmojiIndex = idx
+                _state.update { it.copy(emoji = emojis[idx]) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.customIconPath.collect { path ->
+                _state.update { it.copy(customIconPath = path) }
             }
         }
     }
@@ -101,8 +113,12 @@ class LightViewModel @Inject constructor(
     }
 
     fun nextEmoji() {
-        emojiIndex = (emojiIndex + 1) % emojis.size
-        _state.update { it.copy(emoji = emojis[emojiIndex]) }
+        currentEmojiIndex = (currentEmojiIndex + 1) % emojis.size
+        _state.update { it.copy(emoji = emojis[currentEmojiIndex], customIconPath = null) }
+        viewModelScope.launch {
+            settingsRepository.setEmojiIndex(currentEmojiIndex)
+            settingsRepository.setCustomIconPath("")
+        }
     }
 
     fun toggleSound(sound: SoundType) {

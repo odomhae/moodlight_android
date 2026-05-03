@@ -25,6 +25,8 @@ class AppPreferences @Inject constructor(
         val KEY_ORIENTATION = stringPreferencesKey("orientation")
         val KEY_AUTO_RESTORE = booleanPreferencesKey("auto_restore")
         val KEY_LANGUAGE = stringPreferencesKey("language")
+        val KEY_EMOJI_INDEX = intPreferencesKey("emoji_index")
+        val KEY_CUSTOM_ICON_PATH = stringPreferencesKey("custom_icon_path")
     }
 
     val colorIndex: Flow<Int> = store.data
@@ -47,9 +49,19 @@ class AppPreferences @Inject constructor(
         .catch { emit(emptyPreferences()) }
         .map { it[KEY_LANGUAGE] ?: "ko" }
 
+    val emojiIndex: Flow<Int> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_EMOJI_INDEX] ?: 0 }
+
+    val customIconPath: Flow<String?> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_CUSTOM_ICON_PATH]?.takeIf { path -> path.isNotEmpty() } }
+
     suspend fun setColorIndex(v: Int) = store.edit { it[KEY_COLOR_INDEX] = v }
     suspend fun setBrightness(v: Float) = store.edit { it[KEY_BRIGHTNESS] = v }
     suspend fun setOrientation(v: String) = store.edit { it[KEY_ORIENTATION] = v }
     suspend fun setAutoRestore(v: Boolean) = store.edit { it[KEY_AUTO_RESTORE] = v }
     suspend fun setLanguage(v: String) = store.edit { it[KEY_LANGUAGE] = v }
+    suspend fun setEmojiIndex(v: Int) = store.edit { it[KEY_EMOJI_INDEX] = v }
+    suspend fun setCustomIconPath(v: String) = store.edit { it[KEY_CUSTOM_ICON_PATH] = v }
 }

@@ -1,26 +1,35 @@
 package com.odom.moodlight.ui.component
 
+import android.graphics.BitmapFactory
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LightOrb(
     color: Color,
     emoji: String,
+    customIconPath: String? = null,
     size: Dp = 200.dp,
     onEmojiTap: () -> Unit,
     modifier: Modifier = Modifier
@@ -46,6 +55,16 @@ fun LightOrb(
         ),
         label = "float"
     )
+
+    var imageBitmap by remember(customIconPath) { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(customIconPath) {
+        imageBitmap = if (customIconPath != null) {
+            withContext(Dispatchers.IO) {
+                try { BitmapFactory.decodeFile(customIconPath)?.asImageBitmap() } catch (e: Exception) { null }
+            }
+        } else null
+    }
 
     Box(
         modifier = modifier
@@ -80,13 +99,23 @@ fun LightOrb(
             )
         }
 
-        Text(
-            text = emoji,
-            fontSize = (size.value * 0.3f).sp,
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures { onEmojiTap() }
-                }
-        )
+        val tapModifier = Modifier.pointerInput(Unit) { detectTapGestures { onEmojiTap() } }
+
+        if (imageBitmap != null) {
+            Image(
+                bitmap = imageBitmap!!,
+                contentDescription = null,
+                modifier = tapModifier
+                    .size(size * 0.55f)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = emoji,
+                fontSize = (size.value * 0.3f).sp,
+                modifier = tapModifier
+            )
+        }
     }
 }
