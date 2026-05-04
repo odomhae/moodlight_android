@@ -1,15 +1,24 @@
 package com.odom.moodlight.ui.screen.light
 
 import android.app.Activity
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import android.view.WindowManager
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.odom.moodlight.MoodLightDeviceAdminReceiver
+import kotlinx.coroutines.delay
 import com.odom.moodlight.ui.component.BrightnessSlider
 import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
@@ -38,7 +49,22 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
 
     LaunchedEffect(Unit) {
         viewModel.exitApp.collect {
-            (context as? Activity)?.finishAndRemoveTask()
+            val activity = context as? Activity
+            val dpm = context.getSystemService(DevicePolicyManager::class.java)
+            val adminComp = ComponentName(context, MoodLightDeviceAdminReceiver::class.java)
+            if (dpm?.isAdminActive(adminComp) == true) {
+                dpm.lockNow()
+                activity?.finishAndRemoveTask()
+            } else {
+                activity?.window?.let { window ->
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    val lp = window.attributes
+                    lp.screenBrightness = 0f
+                    window.attributes = lp
+                }
+                delay(600)
+                activity?.finishAndRemoveTask()
+            }
         }
     }
 
@@ -57,11 +83,37 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     var showTimerSheet by remember { mutableStateOf(false) }
     var showControlSheet by remember { mutableStateOf(false) }
 
+    val hintTransition = rememberInfiniteTransition(label = "swipeHint")
+    val hintBounce by hintTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "hintBounce"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColors.Background)
             .alpha(animatedBrightness)
+            .pointerInput(state.sleepMode) {
+                if (!state.sleepMode) {
+                    var startY = 0f
+                    var totalDy = 0f
+                    detectVerticalDragGestures(
+                        onDragStart = { offset -> startY = offset.y; totalDy = 0f },
+                        onVerticalDrag = { change, dy -> totalDy += dy; change.consume() },
+                        onDragEnd = {
+                            if (startY > size.height * 0.35f && totalDy < -80f) showControlSheet = true
+                            totalDy = 0f
+                        },
+                        onDragCancel = { totalDy = 0f }
+                    )
+                }
+            }
     ) {
         Box(
             modifier = Modifier
@@ -111,20 +163,28 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             modifier = Modifier.align(Alignment.Center)
         )
 
-        // 컨트롤 열기 버튼 (하단)
+        // 스와이프 힌트 (하단)
         if (!state.sleepMode) {
-            IconButton(
-                onClick = { showControlSheet = true },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "색상 및 밝기 조절",
+                    contentDescription = null,
                     tint = AppColors.TextDim,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(28.dp)
+                        .offset(y = hintBounce.dp)
+                )
+                Text(
+                    text = "밀어서 색상·밝기 조절",
+                    fontSize = 13.sp,
+                    color = AppColors.TextDim.copy(alpha = 0.7f)
                 )
             }
         }
@@ -189,8 +249,10 @@ private fun ControlBottomSheet(
     onBrightnessChange: (Float) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = AppColors.Panel
     ) {
         Column(
@@ -231,6 +293,7 @@ private fun formatTimer(seconds: Int): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val presets = listOf(
         1 to "1분",
         15 to "15분",
@@ -246,6 +309,7 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = AppColors.Panel
     ) {
         Column(

@@ -1,8 +1,17 @@
 package com.odom.moodlight.ui.screen.settings
 
 import android.app.Activity
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -31,6 +40,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.odom.moodlight.MoodLightDeviceAdminReceiver
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.theme.AppColors
@@ -43,11 +53,24 @@ import java.io.File
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
-    var showOrientationMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
     val coroutineScope = rememberCoroutineScope()
     var cameraFile by remember { mutableStateOf<File?>(null) }
+
+    val dpm = remember { context.getSystemService(DevicePolicyManager::class.java) }
+    val adminComponent = remember { ComponentName(context, MoodLightDeviceAdminReceiver::class.java) }
+    var isAdminActive by remember { mutableStateOf(dpm?.isAdminActive(adminComponent) == true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isAdminActive = dpm?.isAdminActive(adminComponent) == true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     var customBitmap by remember(state.customIconPath) { mutableStateOf<ImageBitmap?>(null) }
     LaunchedEffect(state.customIconPath) {
@@ -96,9 +119,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
                     val file = File(context.filesDir, "custom_icon.jpg")
-                    context.contentResolver.openInputStream(selectedUri)?.use { input ->
-                        file.outputStream().use { output -> input.copyTo(output) }
-                    }
+                    val bitmap = context.contentResolver.openInputStream(selectedUri)?.use { input ->
+                        BitmapFactory.decodeStream(input)
+                    } ?: return@launch
+                    val orientation = context.contentResolver.openInputStream(selectedUri)?.use { input ->
+                        ExifInterface(input).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                    } ?: ExifInterface.ORIENTATION_NORMAL
+                    val rotated = rotateBitmap(bitmap, orientation)
+                    file.outputStream().use { out -> rotated.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+                    if (rotated !== bitmap) bitmap.recycle()
                     withContext(Dispatchers.Main) { viewModel.setCustomIconPath(file.absolutePath) }
                 } catch (e: Exception) { }
             }
@@ -106,7 +135,19 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) cameraFile?.absolutePath?.let { viewModel.setCustomIconPath(it) }
+        if (success) {
+            val path = cameraFile?.absolutePath ?: return@rememberLauncherForActivityResult
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val bitmap = BitmapFactory.decodeFile(path) ?: return@launch
+                    val orientation = ExifInterface(path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                    val rotated = rotateBitmap(bitmap, orientation)
+                    File(path).outputStream().use { out -> rotated.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+                    if (rotated !== bitmap) bitmap.recycle()
+                    withContext(Dispatchers.Main) { viewModel.setCustomIconPath(path) }
+                } catch (e: Exception) { }
+            }
+        }
     }
 
     Column(
@@ -194,61 +235,31 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             }
         }
 
-        SettingSection(title = "화면 방향") {
-            Box {
-                OutlinedButton(onClick = { showOrientationMenu = true }) {
-                    Text(
-                        text = when (state.orientation) {
-                            "portrait" -> "세로"
-                            "landscape" -> "가로"
-                            else -> "자동"
-                        },
-                        color = AppColors.TextPrimary
-                    )
-                }
-                DropdownMenu(
-                    expanded = showOrientationMenu,
-                    onDismissRequest = { showOrientationMenu = false }
-                ) {
-                    listOf("portrait" to "세로", "landscape" to "가로", "auto" to "자동").forEach { (value, label) ->
-                        DropdownMenuItem(
-                            text = { Text(label) },
-                            onClick = {
-                                viewModel.setOrientation(value)
-                                showOrientationMenu = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
         SettingRow(
-            title = "마지막 설정 복원",
-            subtitle = "앱 시작 시 이전 설정 불러오기"
+            title = "타이머 종료 시 화면 끄기",
+            subtitle = if (isAdminActive) "활성화됨" else "권한 허용 필요"
         ) {
             Switch(
-                checked = state.autoRestore,
-                onCheckedChange = viewModel::setAutoRestore,
+                checked = isAdminActive,
+                onCheckedChange = { enable ->
+                    if (enable) {
+                        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                            putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "타이머 종료 시 화면을 자동으로 끕니다.")
+                        }
+                        activity?.startActivity(intent)
+                    } else {
+                        dpm?.removeActiveAdmin(adminComponent)
+                        isAdminActive = false
+                    }
+                },
                 colors = SwitchDefaults.colors(checkedThumbColor = AppColors.WarmYellow)
             )
         }
 
-        SettingSection(title = "언어") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("ko" to "한국어", "en" to "English", "ja" to "日本語").forEach { (code, label) ->
-                    FilterChip(
-                        selected = state.language == code,
-                        onClick = { viewModel.setLanguage(code) },
-                        label = { Text(label, fontSize = 13.sp) }
-                    )
-                }
-            }
-        }
-
         HorizontalDivider(color = AppColors.Border, modifier = Modifier.padding(vertical = 8.dp))
 
-        SettingClickRow("개인정보 처리방침") {}
+      //  SettingClickRow("개인정보 처리방침") {}
 
         SettingClickRow("리뷰 남기기") {
             activity?.let { act ->
@@ -314,4 +325,23 @@ private fun SettingClickRow(title: String, onClick: () -> Unit) {
         Text(title, fontSize = 15.sp, color = AppColors.TextPrimary)
     }
     HorizontalDivider(color = AppColors.Border)
+}
+
+private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = Matrix()
+    when (orientation) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        ExifInterface.ORIENTATION_TRANSPOSE -> { matrix.postRotate(90f); matrix.postScale(-1f, 1f) }
+        ExifInterface.ORIENTATION_TRANSVERSE -> { matrix.postRotate(270f); matrix.postScale(-1f, 1f) }
+        else -> return bitmap
+    }
+    return try {
+        Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    } catch (_: OutOfMemoryError) {
+        bitmap
+    }
 }

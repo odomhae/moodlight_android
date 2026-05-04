@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,6 +28,7 @@ class AppPreferences @Inject constructor(
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_EMOJI_INDEX = intPreferencesKey("emoji_index")
         val KEY_CUSTOM_ICON_PATH = stringPreferencesKey("custom_icon_path")
+        val KEY_ICON_CHANGE_COUNT = intPreferencesKey("icon_change_count")
     }
 
     val colorIndex: Flow<Int> = store.data
@@ -64,4 +66,6 @@ class AppPreferences @Inject constructor(
     suspend fun setLanguage(v: String) = store.edit { it[KEY_LANGUAGE] = v }
     suspend fun setEmojiIndex(v: Int) = store.edit { it[KEY_EMOJI_INDEX] = v }
     suspend fun setCustomIconPath(v: String) = store.edit { it[KEY_CUSTOM_ICON_PATH] = v }
+    suspend fun getIconChangeCount(): Int = store.data.first()[KEY_ICON_CHANGE_COUNT] ?: 0
+    suspend fun setIconChangeCount(v: Int) = store.edit { it[KEY_ICON_CHANGE_COUNT] = v }
 }

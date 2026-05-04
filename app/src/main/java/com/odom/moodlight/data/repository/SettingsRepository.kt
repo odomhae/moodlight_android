@@ -24,4 +24,9 @@ class SettingsRepository @Inject constructor(
     suspend fun setLanguage(v: String) = prefs.setLanguage(v)
     suspend fun setEmojiIndex(v: Int) = prefs.setEmojiIndex(v)
     suspend fun setCustomIconPath(v: String) = prefs.setCustomIconPath(v)
+    suspend fun incrementAndGetIconChangeCount(): Int {
+        val next = prefs.getIconChangeCount() + 1
+        prefs.setIconChangeCount(next)
+        return next
+    }
 }

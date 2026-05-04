@@ -29,7 +29,6 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _showPaywall = MutableStateFlow(false)
-    private var iconChangeCount = 0
 
     private val _showInterstitialAd = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showInterstitialAd: SharedFlow<Unit> = _showInterstitialAd.asSharedFlow()
@@ -71,9 +70,11 @@ class SettingsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     private fun onIconChanged() {
-        iconChangeCount++
-        if (iconChangeCount % 3 == 0) {
-            _showInterstitialAd.tryEmit(Unit)
+        viewModelScope.launch {
+            val count = settingsRepository.incrementAndGetIconChangeCount()
+            if (count % 3 == 0) {
+                _showInterstitialAd.tryEmit(Unit)
+            }
         }
     }
 
