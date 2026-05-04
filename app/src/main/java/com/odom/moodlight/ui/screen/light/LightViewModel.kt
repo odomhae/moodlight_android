@@ -83,6 +83,10 @@ class LightViewModel @Inject constructor(
                 _state.update { it.copy(customIconPath = path) }
             }
         }
+        viewModelScope.launch {
+            val saved = settingsRepository.lastTimerMinutes.first()
+            if (saved > 0) startTimer(saved)
+        }
     }
 
     fun selectColor(index: Int) {
@@ -155,6 +159,7 @@ class LightViewModel @Inject constructor(
     fun startTimer(minutes: Int) {
         timerJob?.cancel()
         _state.update { it.copy(timerMinutes = minutes, timerRemainingSeconds = minutes * 60, isTimerRunning = true) }
+        viewModelScope.launch { settingsRepository.setLastTimerMinutes(minutes) }
         timerJob = viewModelScope.launch {
             var remaining = minutes * 60
             while (remaining > 0) {

@@ -29,6 +29,7 @@ class AppPreferences @Inject constructor(
         val KEY_EMOJI_INDEX = intPreferencesKey("emoji_index")
         val KEY_CUSTOM_ICON_PATH = stringPreferencesKey("custom_icon_path")
         val KEY_ICON_CHANGE_COUNT = intPreferencesKey("icon_change_count")
+        val KEY_LAST_TIMER_MINUTES = intPreferencesKey("last_timer_minutes")
     }
 
     val colorIndex: Flow<Int> = store.data
@@ -68,4 +69,10 @@ class AppPreferences @Inject constructor(
     suspend fun setCustomIconPath(v: String) = store.edit { it[KEY_CUSTOM_ICON_PATH] = v }
     suspend fun getIconChangeCount(): Int = store.data.first()[KEY_ICON_CHANGE_COUNT] ?: 0
     suspend fun setIconChangeCount(v: Int) = store.edit { it[KEY_ICON_CHANGE_COUNT] = v }
+
+    val lastTimerMinutes: Flow<Int> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_LAST_TIMER_MINUTES] ?: 0 }
+
+    suspend fun setLastTimerMinutes(v: Int) = store.edit { it[KEY_LAST_TIMER_MINUTES] = v }
 }

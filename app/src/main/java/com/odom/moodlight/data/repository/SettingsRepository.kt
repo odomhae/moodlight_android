@@ -16,6 +16,7 @@ class SettingsRepository @Inject constructor(
     val language: Flow<String> = prefs.language
     val emojiIndex: Flow<Int> = prefs.emojiIndex
     val customIconPath: Flow<String?> = prefs.customIconPath
+    val lastTimerMinutes: Flow<Int> = prefs.lastTimerMinutes
 
     suspend fun setColorIndex(v: Int) = prefs.setColorIndex(v)
     suspend fun setBrightness(v: Float) = prefs.setBrightness(v)
@@ -29,4 +30,5 @@ class SettingsRepository @Inject constructor(
         prefs.setIconChangeCount(next)
         return next
     }
+    suspend fun setLastTimerMinutes(v: Int) = prefs.setLastTimerMinutes(v)
 }
