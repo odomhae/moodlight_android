@@ -3,7 +3,7 @@ package com.odom.moodlight.ui.screen.settings
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.billingclient.api.ProductDetails
+import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,15 +22,15 @@ data class SettingsUiState(
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
     val appVersion: String = "1.0",
+    val isAdReady: Boolean = false,
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val billingRepository: BillingRepository,
+    private val rewardedAdManager: RewardedAdManager,
 ) : ViewModel() {
-
-    val products: StateFlow<List<ProductDetails>> = billingRepository.products
 
     private val _showPaywall = MutableStateFlow(false)
 
@@ -46,31 +46,36 @@ class SettingsViewModel @Inject constructor(
     )
 
     val state: StateFlow<SettingsUiState> = combine(
-        settingsRepository.colorIndex,
-        settingsRepository.brightness,
-        settingsRepository.orientation,
-        settingsRepository.autoRestore,
         combine(
-            settingsRepository.language,
-            settingsRepository.emojiIndex,
-            settingsRepository.customIconPath,
-            billingRepository.isPro,
-            _showPaywall
-        ) { lang, emojiIdx, customPath, isPro, paywall ->
-            ExtraState(lang, emojiIdx, customPath, isPro, paywall)
-        }
-    ) { colorIdx, brightness, orientation, autoRestore, extra ->
-        SettingsUiState(
-            colorIndex = colorIdx,
-            brightness = brightness,
-            orientation = orientation,
-            autoRestore = autoRestore,
-            language = extra.language,
-            emojiIndex = extra.emojiIndex,
-            customIconPath = extra.customIconPath,
-            isPro = extra.isPro,
-            showPaywall = extra.showPaywall
-        )
+            settingsRepository.colorIndex,
+            settingsRepository.brightness,
+            settingsRepository.orientation,
+            settingsRepository.autoRestore,
+            combine(
+                settingsRepository.language,
+                settingsRepository.emojiIndex,
+                settingsRepository.customIconPath,
+                billingRepository.isPro,
+                _showPaywall
+            ) { lang, emojiIdx, customPath, isPro, paywall ->
+                ExtraState(lang, emojiIdx, customPath, isPro, paywall)
+            }
+        ) { colorIdx, brightness, orientation, autoRestore, extra ->
+            SettingsUiState(
+                colorIndex = colorIdx,
+                brightness = brightness,
+                orientation = orientation,
+                autoRestore = autoRestore,
+                language = extra.language,
+                emojiIndex = extra.emojiIndex,
+                customIconPath = extra.customIconPath,
+                isPro = extra.isPro,
+                showPaywall = extra.showPaywall
+            )
+        },
+        rewardedAdManager.isAdReady
+    ) { partial, isAdReady ->
+        partial.copy(isAdReady = isAdReady)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     private fun onIconChanged() {
@@ -106,9 +111,10 @@ class SettingsViewModel @Inject constructor(
     fun showPaywall() = _showPaywall.update { true }
     fun dismissPaywall() = _showPaywall.update { false }
 
-    fun purchase(activity: Activity, product: ProductDetails) {
-        billingRepository.launchPurchaseFlow(activity, product)
+    fun watchAd(activity: Activity) {
+        rewardedAdManager.show(activity) {
+            billingRepository.setProStatus(true)
+            _showPaywall.update { false }
+        }
     }
-
-    fun retryBilling() = billingRepository.connect()
 }

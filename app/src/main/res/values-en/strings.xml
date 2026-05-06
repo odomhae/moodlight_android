@@ -18,11 +18,13 @@
     <string name="paywall_subtitle">Unlock all sounds, color cycles, and mixer features</string>
     <string name="paywall_feature_mixer">🎛️ Sound Mixer</string>
     <string name="paywall_feature_cycle">🌈 Color Cycle Mode</string>
-    <string name="paywall_lifetime">Lifetime Access %s</string>
-    <string name="paywall_monthly">Monthly Subscription %s</string>
-    <string name="paywall_error">Failed to load products.\nPlease check your Play Store connection.</string>
-    <string name="paywall_retry">Retry</string>
-    <string name="paywall_loading">Loading products&#8230;</string>
+<!--    <string name="paywall_lifetime">Lifetime Access %s</string>-->
+<!--    <string name="paywall_monthly">Monthly Subscription %s</string>-->
+<!--    <string name="paywall_error">Failed to load products.\nPlease check your Play Store connection.</string>-->
+<!--    <string name="paywall_retry">Retry</string>-->
+<!--    <string name="paywall_loading">Loading products&#8230;</string>-->
+    <string name="paywall_watch_ad">📺 Watch an AD to unlock</string>
+    <string name="paywall_ad_loading">Advertising in preparation..</string>
     <string name="paywall_later">Later</string>
 
     <!-- TimerScreen -->

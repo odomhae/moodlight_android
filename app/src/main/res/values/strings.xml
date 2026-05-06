@@ -14,15 +14,12 @@
     <string name="sound_lullaby">자장가</string>
     <string name="sound_piano">피아노</string>
     <string name="sound_wind">바람 소리</string>
-    <string name="paywall_title">✨ PRO 업그레이드</string>
-    <string name="paywall_subtitle">모든 사운드, 색상 사이클, 믹서 기능을 잠금 해제하세요</string>
+    <string name="paywall_title">✨ PRO 기능 잠금 해제</string>
+    <string name="paywall_subtitle">광고를 시청하면 모든 사운드와 기능을 무료로 사용할 수 있어요</string>
     <string name="paywall_feature_mixer">🎛️ 사운드 믹서</string>
     <string name="paywall_feature_cycle">🌈 색상 사이클 모드</string>
-    <string name="paywall_lifetime">평생 이용권 %s</string>
-    <string name="paywall_monthly">월 구독 %s</string>
-    <string name="paywall_error">상품 정보를 불러올 수 없습니다.\nPlay Store 연결을 확인해주세요.</string>
-    <string name="paywall_retry">다시 시도</string>
-    <string name="paywall_loading">상품 정보 불러오는 중&#8230;</string>
+    <string name="paywall_watch_ad">📺 광고 시청하고 잠금 해제</string>
+    <string name="paywall_ad_loading">광고 준비 중&#8230;</string>
     <string name="paywall_later">나중에</string>
 
     <!-- TimerScreen -->

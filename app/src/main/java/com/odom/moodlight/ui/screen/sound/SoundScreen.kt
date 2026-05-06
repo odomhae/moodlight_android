@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.odom.moodlight.R
 import com.odom.moodlight.data.model.SoundType
-import com.odom.moodlight.ui.component.PaywallBottomSheet
+import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.component.SoundCard
 import com.odom.moodlight.ui.theme.AppColors
 
@@ -31,8 +30,8 @@ import com.odom.moodlight.ui.theme.AppColors
 @Composable
 fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val products by viewModel.products.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = context as? Activity
     var showVolumeSheet by remember { mutableStateOf(false) }
 
     Column(
@@ -126,11 +125,10 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
     }
 
     if (state.showPaywall) {
-        PaywallBottomSheet(
-            products = products,
-            onDismiss = viewModel::dismissPaywall,
-            onPurchase = { product -> (context as? Activity)?.let { viewModel.purchase(it, product) } },
-            onRetry = viewModel::retryBilling
+        RewardedAdSheet(
+            isAdReady = state.isAdReady,
+            onWatchAd = { activity?.let { viewModel.watchAd(it) } },
+            onDismiss = viewModel::dismissPaywall
         )
     }
 }

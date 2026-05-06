@@ -4,7 +4,7 @@ import android.app.Activity
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.billingclient.api.ProductDetails
+import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.data.repository.BillingRepository
@@ -15,7 +15,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlin.system.exitProcess
 import javax.inject.Inject
 
 data class LightUiState(
@@ -33,18 +32,19 @@ data class LightUiState(
     val isTimerRunning: Boolean = false,
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
+    val isAdReady: Boolean = false,
 )
 
 @HiltViewModel
 class LightViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val billingRepository: BillingRepository,
-    private val soundPlayer: SoundPlayer
+    private val soundPlayer: SoundPlayer,
+    private val rewardedAdManager: RewardedAdManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LightUiState())
     val state: StateFlow<LightUiState> = _state.asStateFlow()
-    val products: StateFlow<List<ProductDetails>> = billingRepository.products
 
     private val _exitApp = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val exitApp: SharedFlow<Unit> = _exitApp.asSharedFlow()
@@ -89,6 +89,11 @@ class LightViewModel @Inject constructor(
         viewModelScope.launch {
             val saved = settingsRepository.lastTimerMinutes.first()
             if (saved > 0) startTimer(saved)
+        }
+        viewModelScope.launch {
+            rewardedAdManager.isAdReady.collect { isReady ->
+                _state.update { it.copy(isAdReady = isReady) }
+            }
         }
     }
 
@@ -183,11 +188,12 @@ class LightViewModel @Inject constructor(
 
     fun dismissPaywall() = _state.update { it.copy(showPaywall = false) }
 
-    fun purchase(activity: Activity, product: ProductDetails) {
-        billingRepository.launchPurchaseFlow(activity, product)
+    fun watchAd(activity: Activity) {
+        rewardedAdManager.show(activity) {
+            billingRepository.setProStatus(true)
+            _state.update { it.copy(showPaywall = false) }
+        }
     }
-
-    fun retryBilling() = billingRepository.connect()
 
     override fun onCleared() {
         super.onCleared()

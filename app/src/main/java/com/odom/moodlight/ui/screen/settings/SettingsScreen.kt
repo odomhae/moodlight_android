@@ -44,7 +44,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
 import com.odom.moodlight.R
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
-import com.odom.moodlight.ui.component.PaywallBottomSheet
+import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,7 +54,6 @@ import java.io.File
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val products by viewModel.products.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val activity = context as? Activity
@@ -267,8 +266,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         HorizontalDivider(color = AppColors.Border, modifier = Modifier.padding(vertical = 8.dp))
 
-      //  SettingClickRow("개인정보 처리방침") {}
-
         SettingClickRow(stringResource(R.string.settings_leave_review)) {
             activity?.let { act ->
                 val manager = ReviewManagerFactory.create(act)
@@ -284,11 +281,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     }
 
     if (state.showPaywall) {
-        PaywallBottomSheet(
-            products = products,
-            onDismiss = viewModel::dismissPaywall,
-            onPurchase = { product -> activity?.let { viewModel.purchase(it, product) } },
-            onRetry = viewModel::retryBilling
+        RewardedAdSheet(
+            isAdReady = state.isAdReady,
+            onWatchAd = { activity?.let { viewModel.watchAd(it) } },
+            onDismiss = viewModel::dismissPaywall
         )
     }
 }

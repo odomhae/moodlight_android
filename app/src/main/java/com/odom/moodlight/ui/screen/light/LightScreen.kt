@@ -39,13 +39,12 @@ import kotlinx.coroutines.delay
 import com.odom.moodlight.ui.component.BrightnessSlider
 import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
-import com.odom.moodlight.ui.component.PaywallBottomSheet
+import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.theme.AppColors
 
 @Composable
 fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val products by viewModel.products.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     KeepScreenOn()
@@ -240,11 +239,10 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     }
 
     if (state.showPaywall) {
-        PaywallBottomSheet(
-            products = products,
-            onDismiss = viewModel::dismissPaywall,
-            onPurchase = { product -> (context as? Activity)?.let { viewModel.purchase(it, product) } },
-            onRetry = viewModel::retryBilling
+        RewardedAdSheet(
+            isAdReady = state.isAdReady,
+            onWatchAd = { (context as? Activity)?.let { viewModel.watchAd(it) } },
+            onDismiss = viewModel::dismissPaywall
         )
     }
 }
