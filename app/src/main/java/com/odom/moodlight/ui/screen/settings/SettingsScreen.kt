@@ -222,6 +222,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             if (customBitmap != null) {
                 Spacer(Modifier.height(8.dp))
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -232,6 +233,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         contentScale = ContentScale.Crop
                     )
                     Text("커스텀 이미지 사용 중", fontSize = 13.sp, color = AppColors.TextDim)
+                    Spacer(Modifier.weight(1f))
+                    TextButton(onClick = { viewModel.clearCustomIcon() }) {
+                        Text("제거", color = AppColors.SoftPink, fontSize = 13.sp)
+                    }
                 }
             }
         }

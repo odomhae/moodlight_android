@@ -197,8 +197,15 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures(onLongPress = { viewModel.toggleSleepMode() })
-                    }
-            )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "꾹 누르면 해제",
+                    fontSize = 12.sp,
+                    color = AppColors.TextPrimary.copy(alpha = 0.15f)
+                )
+            }
         }
     }
 

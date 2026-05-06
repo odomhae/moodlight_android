@@ -14,7 +14,9 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\" -Recurse -Filter \"*.kt\")",
       "Bash(./gradlew compileDebugKotlin)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 50)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 15)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 15)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 25)"
     ]
   }
 }

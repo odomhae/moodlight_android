@@ -19,7 +19,9 @@ class SoundPlayer @Inject constructor(
     private val _activeSounds = MutableStateFlow<Set<SoundType>>(emptySet())
     val activeSounds: StateFlow<Set<SoundType>> = _activeSounds
 
-    private val _volumes = MutableStateFlow<Map<SoundType, Float>>(emptyMap())
+    private val _volumes = MutableStateFlow<Map<SoundType, Float>>(
+        SoundType.entries.associateWith { 1f }
+    )
     val volumes: StateFlow<Map<SoundType, Float>> = _volumes
 
     fun toggle(sound: SoundType) {
@@ -33,6 +35,7 @@ class SoundPlayer @Inject constructor(
         )
         if (resId == 0) return
         val player = MediaPlayer.create(context, resId) ?: return
+        val storedVolume = _volumes.value[sound] ?: 1f
         player.apply {
             isLooping = true
             setAudioAttributes(
@@ -41,11 +44,11 @@ class SoundPlayer @Inject constructor(
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
+            setVolume(storedVolume, storedVolume)
             start()
         }
         players[sound] = player
         _activeSounds.value = _activeSounds.value + sound
-        _volumes.value = _volumes.value + (sound to 1f)
     }
 
     fun stop(sound: SoundType) {
@@ -55,14 +58,12 @@ class SoundPlayer @Inject constructor(
         }
         players.remove(sound)
         _activeSounds.value = _activeSounds.value - sound
-        _volumes.value = _volumes.value - sound
     }
 
     fun stopAll() {
         players.values.forEach { it.stop(); it.release() }
         players.clear()
         _activeSounds.value = emptySet()
-        _volumes.value = emptyMap()
     }
 
     fun setVolume(sound: SoundType, volume: Float) {

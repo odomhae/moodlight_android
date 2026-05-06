@@ -1,6 +1,7 @@
 package com.odom.moodlight.ui.navigation
 
 import android.app.Activity
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +21,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.odom.moodlight.ui.component.AdBannerView
+import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.screen.light.LightScreen
 import com.odom.moodlight.ui.screen.settings.SettingsScreen
 import com.odom.moodlight.ui.screen.sound.SoundScreen
@@ -40,9 +47,47 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val navBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStack?.destination?.route
-    val activity = LocalContext.current as? Activity
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     var showExitSheet by remember { mutableStateOf(false) }
+    var navInterstitialAd by remember { mutableStateOf<InterstitialAd?>(null) }
+    val prefs = remember { context.getSharedPreferences("moodlight_nav", Context.MODE_PRIVATE) }
+    val tabSwitchCount = remember { intArrayOf(prefs.getInt("tab_switch_count", 0)) }
+    val isFirstRouteLoad = remember { booleanArrayOf(true) }
+
+    fun loadNavInterstitial() {
+        activity?.let { act ->
+            InterstitialAd.load(act, INTERSTITIAL_AD_UNIT_ID, AdRequest.Builder().build(),
+                object : InterstitialAdLoadCallback() {
+                    override fun onAdLoaded(ad: InterstitialAd) { navInterstitialAd = ad }
+                    override fun onAdFailedToLoad(e: LoadAdError) { navInterstitialAd = null }
+                }
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) { loadNavInterstitial() }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == null) return@LaunchedEffect
+        if (isFirstRouteLoad[0]) { isFirstRouteLoad[0] = false; return@LaunchedEffect }
+        tabSwitchCount[0]++
+        prefs.edit().putInt("tab_switch_count", tabSwitchCount[0]).apply()
+        if (tabSwitchCount[0] % 5 == 0) {
+            val ad = navInterstitialAd
+            if (ad != null && activity != null) {
+                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        navInterstitialAd = null
+                        loadNavInterstitial()
+                    }
+                }
+                ad.show(activity)
+                navInterstitialAd = null
+            }
+        }
+    }
 
     BackHandler {
         showExitSheet = true
