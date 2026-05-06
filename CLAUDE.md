@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # MoodLight — CLAUDE.md
 
 ## Project Overview
@@ -6,11 +10,48 @@
 
 - **Package**: `com.odom.moodlight`
 - **Min SDK**: 26 | **Target/Compile SDK**: 36
-- **Language**: Kotlin
+- **Language**: Kotlin (JVM target 17)
 - **UI**: Jetpack Compose + Material3
 - **DI**: Hilt
 - **Persistence**: DataStore Preferences
 - **Monetization**: Google Play Billing (one-time + subscription) + AdMob ads
+
+---
+
+## Build & Test
+
+Requires **Java 17**. On Windows use `.\gradlew` (PowerShell) or `gradlew.bat`.
+
+```bash
+# Debug build
+./gradlew assembleDebug
+
+# Release build (minification disabled — no ProGuard config)
+./gradlew assembleRelease
+
+# Unit tests
+./gradlew test
+
+# Instrumentation tests (requires connected device/emulator)
+./gradlew connectedAndroidTest
+
+# Lint
+./gradlew lint
+```
+
+> **Note**: The `test/` and `androidTest/` directories currently contain only the auto-generated `ExampleUnitTest` / `ExampleInstrumentedTest` placeholders — there are no real test suites yet.
+
+Key dependency versions (from `gradle/libs.versions.toml`):
+
+| Library | Version |
+|---------|---------|
+| AGP | 8.9.1 |
+| Kotlin | 2.0.21 |
+| Compose BOM | 2024.09.00 |
+| Hilt | 2.51.1 |
+| DataStore | 1.1.1 |
+| Play Billing | 7.0.0 |
+| Play Ads | 23.6.0 |
 
 ---
 
@@ -61,8 +102,8 @@ app/src/main/java/com/odom/moodlight/
     │   │   ├── SoundScreen.kt
     │   │   └── SoundViewModel.kt
     │   └── timer/
-    │       ├── TimerScreen.kt
-    │       └── TimerViewModel.kt
+    │       ├── TimerScreen.kt          # Standalone timer screen (not in bottom nav)
+    │       └── TimerViewModel.kt       # Self-contained countdown; end actions: CLOSE_APP, DIM_AND_CLOSE, PLAY_ALARM
     └── theme/
         ├── Color.kt                    # AppColors object
         ├── Theme.kt                    # MoodLightTheme (always dark)
@@ -83,6 +124,7 @@ Three tabs defined in `AppNavigation.kt`:
 
 - Back button triggers an exit confirmation `ModalBottomSheet` with an AdMob banner ad inside.
 - Default start destination: `light`.
+- `ui/screen/timer/` exists but is **not wired into the bottom nav** — it is a standalone timer screen for future integration.
 
 ---
 
@@ -183,6 +225,7 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 - `SoundPlayer` (Hilt `@Singleton`) manages `MediaPlayer` instances keyed by `SoundType`
 - Multiple sounds can be active simultaneously; each has an independent volume
 - PRO gate: tapping a PRO sound when not PRO shows `PaywallBottomSheet`
+- `AudioService` is a foreground service (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`) that keeps audio running when the app is backgrounded; it binds to `SoundPlayer`
 
 ---
 
@@ -239,27 +282,3 @@ ModalBottomSheet(
 - `MoodLightDeviceAdminReceiver` is a minimal empty subclass of `DeviceAdminReceiver`
 - Only the `force-lock` policy is declared — no other device admin capabilities
 - Always check `dpm.isAdminActive(adminComponent)` before calling `lockNow()`
-
----
-
-## Build
-
-```bash
-# Debug build
-./gradlew assembleDebug
-
-# Release build
-./gradlew assembleRelease
-```
-
-Key dependency versions (from `gradle/libs.versions.toml`):
-
-| Library | Version |
-|---------|---------|
-| AGP | 8.9.1 |
-| Kotlin | 2.0.21 |
-| Compose BOM | 2024.09.00 |
-| Hilt | 2.51.1 |
-| DataStore | 1.1.1 |
-| Play Billing | 7.0.0 |
-| Play Ads | 23.6.0 |

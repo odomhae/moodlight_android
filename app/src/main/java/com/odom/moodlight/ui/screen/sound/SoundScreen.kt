@@ -1,5 +1,6 @@
 package com.odom.moodlight.ui.screen.sound
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +24,8 @@ import com.odom.moodlight.ui.theme.AppColors
 @Composable
 fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val products by viewModel.products.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -89,9 +93,10 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
 
     if (state.showPaywall) {
         PaywallBottomSheet(
-            products = emptyList(),
+            products = products,
             onDismiss = viewModel::dismissPaywall,
-            onPurchase = {}
+            onPurchase = { product -> (context as? Activity)?.let { viewModel.purchase(it, product) } },
+            onRetry = viewModel::retryBilling
         )
     }
 }

@@ -5,7 +5,16 @@
       "Bash(Select-Object FullName)",
       "Bash(Get-ChildItem -Path \"E:\\\\MongGel\\\\AndroidStudioProjects\\\\MoodLight\" -Recurse -Filter \"*.kt\")",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Sort-Object)"
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\" -Recurse -Force)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Format-Table -Property FullName, Length)",
+      "Bash(./gradlew.bat tasks *)",
+      "Bash(xargs grep -l \"MobileAds\\\\|AdBannerView\\\\|Interstitial\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\" -Recurse -Filter \"*.kt\")",
+      "Bash(./gradlew compileDebugKotlin)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 50)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 15)"
     ]
   }
 }

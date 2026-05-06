@@ -1,7 +1,9 @@
 package com.odom.moodlight.ui.screen.settings
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +29,8 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val billingRepository: BillingRepository,
 ) : ViewModel() {
+
+    val products: StateFlow<List<ProductDetails>> = billingRepository.products
 
     private val _showPaywall = MutableStateFlow(false)
 
@@ -101,4 +105,10 @@ class SettingsViewModel @Inject constructor(
     fun clearCustomIcon() = viewModelScope.launch { settingsRepository.setCustomIconPath("") }
     fun showPaywall() = _showPaywall.update { true }
     fun dismissPaywall() = _showPaywall.update { false }
+
+    fun purchase(activity: Activity, product: ProductDetails) {
+        billingRepository.launchPurchaseFlow(activity, product)
+    }
+
+    fun retryBilling() = billingRepository.connect()
 }

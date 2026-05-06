@@ -43,6 +43,7 @@ import com.odom.moodlight.ui.theme.AppColors
 @Composable
 fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val products by viewModel.products.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     KeepScreenOn()
@@ -231,9 +232,10 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
 
     if (state.showPaywall) {
         PaywallBottomSheet(
-            products = emptyList(),
+            products = products,
             onDismiss = viewModel::dismissPaywall,
-            onPurchase = {}
+            onPurchase = { product -> (context as? Activity)?.let { viewModel.purchase(it, product) } },
+            onRetry = viewModel::retryBilling
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.odom.moodlight.ui.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -61,7 +62,7 @@ fun SoundCard(
             }
         }
         if (sound.isPro && !isPro) {
-            ProBadgeOverlay(modifier = Modifier.matchParentSize())
+            ProBadgeOverlay(modifier = Modifier.matchParentSize().clickable(onClick = onToggle))
         }
     }
 }

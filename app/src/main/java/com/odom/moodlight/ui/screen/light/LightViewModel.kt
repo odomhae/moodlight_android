@@ -1,8 +1,10 @@
 package com.odom.moodlight.ui.screen.light
 
+import android.app.Activity
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.data.repository.BillingRepository
@@ -42,6 +44,7 @@ class LightViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(LightUiState())
     val state: StateFlow<LightUiState> = _state.asStateFlow()
+    val products: StateFlow<List<ProductDetails>> = billingRepository.products
 
     private val _exitApp = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val exitApp: SharedFlow<Unit> = _exitApp.asSharedFlow()
@@ -179,6 +182,12 @@ class LightViewModel @Inject constructor(
     }
 
     fun dismissPaywall() = _state.update { it.copy(showPaywall = false) }
+
+    fun purchase(activity: Activity, product: ProductDetails) {
+        billingRepository.launchPurchaseFlow(activity, product)
+    }
+
+    fun retryBilling() = billingRepository.connect()
 
     override fun onCleared() {
         super.onCleared()

@@ -1,7 +1,9 @@
 package com.odom.moodlight.ui.screen.sound
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.data.repository.BillingRepository
@@ -26,6 +28,8 @@ class SoundViewModel @Inject constructor(
 
     private val _showPaywall = MutableStateFlow(false)
     private val _selectedForVolume = MutableStateFlow<SoundType?>(null)
+
+    val products: StateFlow<List<ProductDetails>> = billingRepository.products
 
     val state: StateFlow<SoundUiState> = combine(
         soundPlayer.activeSounds,
@@ -63,4 +67,10 @@ class SoundViewModel @Inject constructor(
     fun dismissPaywall() {
         _showPaywall.value = false
     }
+
+    fun purchase(activity: Activity, product: ProductDetails) {
+        billingRepository.launchPurchaseFlow(activity, product)
+    }
+
+    fun retryBilling() = billingRepository.connect()
 }

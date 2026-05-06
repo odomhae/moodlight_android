@@ -52,6 +52,7 @@ import java.io.File
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val products by viewModel.products.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val activity = context as? Activity
@@ -277,9 +278,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
     if (state.showPaywall) {
         PaywallBottomSheet(
-            products = emptyList(),
+            products = products,
             onDismiss = viewModel::dismissPaywall,
-            onPurchase = {}
+            onPurchase = { product -> activity?.let { viewModel.purchase(it, product) } },
+            onRetry = viewModel::retryBilling
         )
     }
 }
