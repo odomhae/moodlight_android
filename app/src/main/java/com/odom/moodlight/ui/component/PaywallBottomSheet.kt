@@ -11,11 +11,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.billingclient.api.ProductDetails
+import com.odom.moodlight.R
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.delay
 
@@ -49,22 +51,22 @@ fun PaywallBottomSheet(
                 .padding(bottom = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "✨ PRO 업그레이드", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+            Text(text = stringResource(id = R.string.paywall_title), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "모든 사운드, 색상 사이클, 믹서 기능을 잠금 해제하세요",
+                text = stringResource(id = R.string.paywall_subtitle),
                 fontSize = 14.sp,
                 color = AppColors.TextDim
             )
             Spacer(Modifier.height(24.dp))
 
             listOf(
-                "🔥 모닥불",
-                "🎵 자장가",
-                "🎹 피아노",
-                "🌬️ 바람 소리",
-                "🎛️ 사운드 믹서",
-                "🌈 색상 사이클 모드"
+                "🔥 " + stringResource(id = R.string.sound_fire),
+                "🎵 " + stringResource(id = R.string.sound_lullaby),
+                "🎹 " + stringResource(id = R.string.sound_piano),
+                "🌬️ " + stringResource(id = R.string.sound_wind),
+                stringResource(id = R.string.paywall_feature_mixer),
+                stringResource(id = R.string.paywall_feature_cycle)
             ).forEach { feature ->
                 Row(
                     modifier = Modifier
@@ -87,7 +89,11 @@ fun PaywallBottomSheet(
                             ?: product.subscriptionOfferDetails?.firstOrNull()
                                 ?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
                             ?: ""
-                        val title = if (product.productId.contains("lifetime")) "평생 이용권 $price" else "월 구독 $price"
+                        val title = if (product.productId.contains("lifetime")) {
+                            stringResource(id = R.string.paywall_lifetime, price)
+                        } else {
+                            stringResource(id = R.string.paywall_monthly, price)
+                        }
                         Button(
                             onClick = { onPurchase(product) },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -99,7 +105,7 @@ fun PaywallBottomSheet(
                 }
                 isTimedOut -> {
                     Text(
-                        text = "상품 정보를 불러올 수 없습니다.\nPlay Store 연결을 확인해주세요.",
+                        text = stringResource(id = R.string.paywall_error),
                         fontSize = 14.sp,
                         color = AppColors.TextDim,
                         textAlign = TextAlign.Center
@@ -113,19 +119,19 @@ fun PaywallBottomSheet(
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("다시 시도", color = AppColors.Background, fontWeight = FontWeight.Bold)
+                        Text(stringResource(id = R.string.paywall_retry), color = AppColors.Background, fontWeight = FontWeight.Bold)
                     }
                 }
                 else -> {
                     CircularProgressIndicator(color = AppColors.WarmYellow)
                     Spacer(Modifier.height(8.dp))
-                    Text("상품 정보 불러오는 중...", fontSize = 13.sp, color = AppColors.TextDim)
+                    Text(stringResource(id = R.string.paywall_loading), fontSize = 13.sp, color = AppColors.TextDim)
                 }
             }
 
             Spacer(Modifier.height(12.dp))
             TextButton(onClick = onDismiss) {
-                Text(text = "나중에", color = AppColors.TextDim)
+                Text(text = stringResource(id = R.string.paywall_later), color = AppColors.TextDim)
             }
         }
     }

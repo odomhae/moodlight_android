@@ -3,4 +3,64 @@
     <string name="tab_light">조명</string>
     <string name="tab_sound">사운드</string>
     <string name="tab_settings">설정</string>
+    <string name="sound_screen_volume_btn">🎚️ 볼륨</string>
+    <string name="sound_screen_volume_settings_title">볼륨 설정</string>
+    <string name="sound_stop">정지</string>
+    <string name="sound_play">재생</string>
+    <string name="sound_rain">빗소리</string>
+    <string name="sound_wave">파도 소리</string>
+    <string name="sound_forest">숲 소리</string>
+    <string name="sound_fire">모닥불</string>
+    <string name="sound_lullaby">자장가</string>
+    <string name="sound_piano">피아노</string>
+    <string name="sound_wind">바람 소리</string>
+    <string name="paywall_title">✨ PRO 업그레이드</string>
+    <string name="paywall_subtitle">모든 사운드, 색상 사이클, 믹서 기능을 잠금 해제하세요</string>
+    <string name="paywall_feature_mixer">🎛️ 사운드 믹서</string>
+    <string name="paywall_feature_cycle">🌈 색상 사이클 모드</string>
+    <string name="paywall_lifetime">평생 이용권 %s</string>
+    <string name="paywall_monthly">월 구독 %s</string>
+    <string name="paywall_error">상품 정보를 불러올 수 없습니다.\nPlay Store 연결을 확인해주세요.</string>
+    <string name="paywall_retry">다시 시도</string>
+    <string name="paywall_loading">상품 정보 불러오는 중&#8230;</string>
+    <string name="paywall_later">나중에</string>
+
+    <!-- TimerScreen -->
+    <string name="timer_title">타이머</string>
+    <string name="timer_remaining_time">남은 시간</string>
+    <string name="timer_unit_hour">시간</string>
+    <string name="timer_unit_min">분</string>
+    <string name="timer_end_action_title">타이머 종료 시</string>
+    <string name="timer_action_close_app">앱 종료</string>
+    <string name="timer_action_dim_and_close">밝기 감소 후 종료</string>
+    <string name="timer_action_play_alarm">알림음 재생 후 종료</string>
+    <string name="timer_start">시작</string>
+    <string name="timer_cancel">취소</string>
+
+    <!-- LightScreen -->
+    <string name="light_timer_title">⏱️ 타이머</string>
+    <string name="light_cancel">취소</string>
+    <string name="light_swipe_hint">밀어서 색상·밝기 조절</string>
+    <string name="light_sleep_mode_hint">꾹 누르면 해제</string>
+    <string name="light_control_title">색상 및 밝기</string>
+    <string name="light_timer_setting_title">타이머 설정</string>
+    <string name="light_start">시작</string>
+    <string name="light_unit_min">분</string>
+    <string name="light_unit_hour">시간</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">설정</string>
+    <string name="settings_pro_upgrade">PRO로 업그레이드</string>
+    <string name="settings_pro_desc">모든 사운드 &amp; 기능 잠금 해제</string>
+    <string name="settings_icon_section">중앙 아이콘</string>
+    <string name="settings_camera">📷 카메라</string>
+    <string name="settings_gallery">🖼️ 앨범</string>
+    <string name="settings_custom_image_active">커스텀 이미지 사용 중</string>
+    <string name="settings_remove">제거</string>
+    <string name="settings_screen_off_title">타이머 종료 시 화면 끄기</string>
+    <string name="settings_enabled">활성화됨</string>
+    <string name="settings_permission_required">권한 허용 필요</string>
+    <string name="settings_permission_explanation">타이머 종료 시 화면을 자동으로 끕니다.</string>
+    <string name="settings_leave_review">리뷰 남기기</string>
+    <string name="settings_app_version">앱 버전</string>
 </resources>

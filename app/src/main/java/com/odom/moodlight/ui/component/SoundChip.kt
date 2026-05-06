@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.odom.moodlight.data.model.SoundType
@@ -48,7 +49,7 @@ fun SoundChip(
             fontSize = 20.sp
         )
         Text(
-            text = sound.label,
+            text = stringResource(sound.labelResId),
             fontSize = 11.sp,
             color = if (isActive) AppColors.TextPrimary else AppColors.TextDim
         )

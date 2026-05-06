@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">Baby Night Light</string>
+    <string name="tab_light">Light</string>
+    <string name="tab_sound">Sound</string>
+    <string name="tab_settings">Settings</string>
+    <string name="sound_screen_volume_btn">🎚️ Volume</string>
+    <string name="sound_screen_volume_settings_title">Volume Settings</string>
+    <string name="sound_stop">Stop</string>
+    <string name="sound_play">Play</string>
+    <string name="sound_rain">Rain</string>
+    <string name="sound_wave">Waves</string>
+    <string name="sound_forest">Forest</string>
+    <string name="sound_fire">Fireplace</string>
+    <string name="sound_lullaby">Lullaby</string>
+    <string name="sound_piano">Piano</string>
+    <string name="sound_wind">Wind</string>
+    <string name="paywall_title">✨ PRO Upgrade</string>
+    <string name="paywall_subtitle">Unlock all sounds, color cycles, and mixer features</string>
+    <string name="paywall_feature_mixer">🎛️ Sound Mixer</string>
+    <string name="paywall_feature_cycle">🌈 Color Cycle Mode</string>
+    <string name="paywall_lifetime">Lifetime Access %s</string>
+    <string name="paywall_monthly">Monthly Subscription %s</string>
+    <string name="paywall_error">Failed to load products.\nPlease check your Play Store connection.</string>
+    <string name="paywall_retry">Retry</string>
+    <string name="paywall_loading">Loading products&#8230;</string>
+    <string name="paywall_later">Later</string>
+
+    <!-- TimerScreen -->
+    <string name="timer_title">Timer</string>
+    <string name="timer_remaining_time">Remaining Time</string>
+    <string name="timer_unit_hour">hr</string>
+    <string name="timer_unit_min">min</string>
+    <string name="timer_end_action_title">When Timer Ends</string>
+    <string name="timer_action_close_app">Close App</string>
+    <string name="timer_action_dim_and_close">Dim and Close</string>
+    <string name="timer_action_play_alarm">Play Alarm and Close</string>
+    <string name="timer_start">Start</string>
+    <string name="timer_cancel">Cancel</string>
+
+    <!-- LightScreen -->
+    <string name="light_timer_title">⏱️ Timer</string>
+    <string name="light_cancel">Cancel</string>
+    <string name="light_swipe_hint">Swipe to adjust color/brightness</string>
+    <string name="light_sleep_mode_hint">Long press to unlock</string>
+    <string name="light_control_title">Color &amp; Brightness</string>
+    <string name="light_timer_setting_title">Timer Settings</string>
+    <string name="light_start">Start</string>
+    <string name="light_unit_min">min</string>
+    <string name="light_unit_hour">hr</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_pro_upgrade">Upgrade to PRO</string>
+    <string name="settings_pro_desc">Unlock all sounds &amp; features</string>
+    <string name="settings_icon_section">Center Icon</string>
+    <string name="settings_camera">📷 Camera</string>
+    <string name="settings_gallery">🖼️ Gallery</string>
+    <string name="settings_custom_image_active">Using custom image</string>
+    <string name="settings_remove">Remove</string>
+    <string name="settings_screen_off_title">Screen off when timer ends</string>
+    <string name="settings_enabled">Enabled</string>
+    <string name="settings_permission_required">Permission Required</string>
+    <string name="settings_permission_explanation">Automatically turns off the screen when the timer ends.</string>
+    <string name="settings_leave_review">Leave a review</string>
+    <string name="settings_app_version">App Version</string>
+</resources>

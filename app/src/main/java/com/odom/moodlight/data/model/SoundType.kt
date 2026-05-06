@@ -1,16 +1,19 @@
 package com.odom.moodlight.data.model
 
+import androidx.annotation.StringRes
+import com.odom.moodlight.R
+
 enum class SoundType(
     val emoji: String,
-    val label: String,
+    @StringRes val labelResId: Int,
     val isPro: Boolean,
     val resourceName: String
 ) {
-    RAIN("🌧️", "빗소리", false, "rain"),
-    WAVE("🌊", "파도 소리", false, "wave"),
-    FOREST("🌲", "숲 소리", false, "forest"),
-    FIRE("🔥", "모닥불", true, "fire"),
-    LULLABY("🎵", "자장가", true, "lullaby"),
-    PIANO("🎹", "피아노", true, "piano"),
-    WIND("🌬️", "바람 소리", true, "wind"),
+    RAIN("🌧️", R.string.sound_rain, false, "rain"),
+    WAVE("🌊", R.string.sound_wave, false, "wave"),
+    FOREST("🌲", R.string.sound_forest, false, "forest"),
+    FIRE("🔥", R.string.sound_fire, true, "fire"),
+    LULLABY("🎵", R.string.sound_lullaby, true, "lullaby"),
+    PIANO("🎹", R.string.sound_piano, true, "piano"),
+    WIND("🌬️", R.string.sound_wind, true, "wind"),
 }

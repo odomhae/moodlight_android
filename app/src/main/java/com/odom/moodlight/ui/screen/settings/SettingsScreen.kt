@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +42,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
+import com.odom.moodlight.R
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.theme.AppColors
@@ -158,7 +160,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             .padding(horizontal = 16.dp)
     ) {
         Spacer(Modifier.height(16.dp))
-        Text("설정", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+        Text(stringResource(R.string.settings_title), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
         Spacer(Modifier.height(16.dp))
 
         if (!state.isPro) {
@@ -175,15 +177,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     Text("✨", fontSize = 28.sp)
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Text("PRO로 업그레이드", fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
-                        Text("모든 사운드 & 기능 잠금 해제", fontSize = 13.sp, color = AppColors.TextDim)
+                        Text(stringResource(R.string.settings_pro_upgrade), fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
+                        Text(stringResource(R.string.settings_pro_desc), fontSize = 13.sp, color = AppColors.TextDim)
                     }
                 }
             }
             Spacer(Modifier.height(16.dp))
         }
 
-        SettingSection(title = "중앙 아이콘") {
+        SettingSection(title = stringResource(R.string.settings_icon_section)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -210,13 +212,13 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("📷 카메라", color = AppColors.TextPrimary)
+                    Text(stringResource(R.string.settings_camera), color = AppColors.TextPrimary)
                 }
                 OutlinedButton(
                     onClick = { galleryLauncher.launch("image/*") },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("🖼️ 앨범", color = AppColors.TextPrimary)
+                    Text(stringResource(R.string.settings_gallery), color = AppColors.TextPrimary)
                 }
             }
             if (customBitmap != null) {
@@ -232,18 +234,18 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         modifier = Modifier.size(48.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
-                    Text("커스텀 이미지 사용 중", fontSize = 13.sp, color = AppColors.TextDim)
+                    Text(stringResource(R.string.settings_custom_image_active), fontSize = 13.sp, color = AppColors.TextDim)
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = { viewModel.clearCustomIcon() }) {
-                        Text("제거", color = AppColors.SoftPink, fontSize = 13.sp)
+                        Text(stringResource(R.string.settings_remove), color = AppColors.SoftPink, fontSize = 13.sp)
                     }
                 }
             }
         }
 
         SettingRow(
-            title = "타이머 종료 시 화면 끄기",
-            subtitle = if (isAdminActive) "활성화됨" else "권한 허용 필요"
+            title = stringResource(R.string.settings_screen_off_title),
+            subtitle = if (isAdminActive) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_permission_required)
         ) {
             Switch(
                 checked = isAdminActive,
@@ -251,7 +253,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     if (enable) {
                         val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
                             putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
-                            putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "타이머 종료 시 화면을 자동으로 끕니다.")
+                            putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, context.getString(R.string.settings_permission_explanation))
                         }
                         activity?.startActivity(intent)
                     } else {
@@ -267,7 +269,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
       //  SettingClickRow("개인정보 처리방침") {}
 
-        SettingClickRow("리뷰 남기기") {
+        SettingClickRow(stringResource(R.string.settings_leave_review)) {
             activity?.let { act ->
                 val manager = ReviewManagerFactory.create(act)
                 manager.requestReviewFlow().addOnSuccessListener { reviewInfo ->
@@ -276,7 +278,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             }
         }
 
-        SettingRow(title = "앱 버전", subtitle = state.appVersion) {}
+        SettingRow(title = stringResource(R.string.settings_app_version), subtitle = state.appVersion) {}
 
         Spacer(Modifier.height(80.dp))
     }

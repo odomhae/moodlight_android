@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
+import com.odom.moodlight.R
 import kotlinx.coroutines.delay
 import com.odom.moodlight.ui.component.BrightnessSlider
 import com.odom.moodlight.ui.component.ColorPickerRow
@@ -141,13 +143,13 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                         fontWeight = FontWeight.SemiBold
                     )
                     TextButton(onClick = viewModel::cancelTimer) {
-                        Text("취소", color = AppColors.TextDim, fontSize = 13.sp)
+                        Text(stringResource(R.string.light_cancel), color = AppColors.TextDim, fontSize = 13.sp)
                     }
                 }
             } else {
                 TextButton(onClick = { showTimerSheet = true }) {
                     Text(
-                        text = "⏱️ 타이머",
+                        text = stringResource(R.string.light_timer_title),
                         fontSize = 16.sp,
                         color = AppColors.TextDim
                     )
@@ -183,7 +185,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                         .offset(y = hintBounce.dp)
                 )
                 Text(
-                    text = "밀어서 색상·밝기 조절",
+                    text = stringResource(R.string.light_swipe_hint),
                     fontSize = 13.sp,
                     color = AppColors.TextDim.copy(alpha = 0.7f)
                 )
@@ -201,7 +203,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "꾹 누르면 해제",
+                    stringResource(R.string.light_sleep_mode_hint),
                     fontSize = 12.sp,
                     color = AppColors.TextPrimary.copy(alpha = 0.15f)
                 )
@@ -272,7 +274,7 @@ private fun ControlBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "색상 및 밝기",
+                stringResource(R.string.light_control_title),
                 fontSize = 16.sp,
                 color = AppColors.TextPrimary,
                 fontWeight = FontWeight.SemiBold,
@@ -304,15 +306,15 @@ private fun formatTimer(seconds: Int): String {
 private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val presets = listOf(
-        1 to "1분",
-        15 to "15분",
-        30 to "30분",
-        60 to "1시간",
-        120 to "2시간",
-        180 to "3시간",
-        240 to "4시간",
-        300 to "5시간",
-        360 to "6시간"
+        1 to "1" + stringResource(R.string.light_unit_min),
+        15 to "15" + stringResource(R.string.light_unit_min),
+        30 to "30" + stringResource(R.string.light_unit_min),
+        60 to "1" + stringResource(R.string.light_unit_hour),
+        120 to "2" + stringResource(R.string.light_unit_hour),
+        180 to "3" + stringResource(R.string.light_unit_hour),
+        240 to "4" + stringResource(R.string.light_unit_hour),
+        300 to "5" + stringResource(R.string.light_unit_hour),
+        360 to "6" + stringResource(R.string.light_unit_hour)
     )
     var selectedMinutes by remember { mutableIntStateOf(30) }
 
@@ -329,7 +331,7 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "타이머 설정",
+                stringResource(R.string.light_timer_setting_title),
                 fontSize = 18.sp,
                 color = AppColors.TextPrimary,
                 fontWeight = FontWeight.SemiBold
@@ -388,7 +390,7 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow)
             ) {
-                Text("시작", color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.light_start), color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }

@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.odom.moodlight.R
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.ui.component.PaywallBottomSheet
 import com.odom.moodlight.ui.component.SoundCard
@@ -44,14 +46,14 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "사운드",
+                text = stringResource(id = R.string.tab_sound),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.TextPrimary,
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { showVolumeSheet = true }) {
-                Text("🎚️ 볼륨", color = AppColors.TextPrimary, fontSize = 14.sp)
+                Text(stringResource(id = R.string.sound_screen_volume_btn), color = AppColors.TextPrimary, fontSize = 14.sp)
             }
         }
 
@@ -87,7 +89,7 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
                     .padding(bottom = 32.dp)
             ) {
                 Text(
-                    "볼륨 설정",
+                    stringResource(id = R.string.sound_screen_volume_settings_title),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AppColors.TextPrimary,
@@ -103,7 +105,7 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${sound.emoji} ${sound.label}",
+                            text = "${sound.emoji} ${stringResource(id = sound.labelResId)}",
                             fontSize = 14.sp,
                             color = if (isActive) AppColors.WarmYellow else AppColors.TextDim,
                             modifier = Modifier.width(100.dp)

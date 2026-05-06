@@ -9,8 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.odom.moodlight.R
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.ui.theme.AppColors
 
@@ -41,7 +43,7 @@ fun SoundCard(
                 Text(text = sound.emoji, fontSize = 36.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = sound.label,
+                    text = stringResource(id = sound.labelResId),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppColors.TextPrimary
                 )
@@ -55,7 +57,7 @@ fun SoundCard(
                 IconButton(onClick = onToggle) {
                     Icon(
                         imageVector = if (isActive) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isActive) "정지" else "재생",
+                        contentDescription = if (isActive) stringResource(id = R.string.sound_stop) else stringResource(id = R.string.sound_play),
                         tint = AppColors.TextPrimary
                     )
                 }
