@@ -101,6 +101,11 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     )
 
     val isNonePattern = state.visualPattern == VisualPattern.NONE
+    val isWavePattern = state.visualPattern == VisualPattern.WAVE
+
+    // NONE 모드에서는 배경색 밝기에 따라 대비색 사용 (perceived luminance)
+    val perceivedLuminance = animatedColor.red * 0.299f + animatedColor.green * 0.587f + animatedColor.blue * 0.114f
+    val onBackground = if (isNonePattern && perceivedLuminance > 0.45f) Color.Black else Color.White
 
     Box(
         modifier = Modifier
@@ -155,13 +160,13 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     Text(
                         text = "⏱️ " + formatTimer(state.timerRemainingSeconds),
                         fontSize = 20.sp,
-                        color = if (isNonePattern) Color.White.copy(alpha = 0.8f) else AppColors.WarmYellow,
+                        color = onBackground.copy(alpha = 0.9f),
                         fontWeight = FontWeight.SemiBold
                     )
                     TextButton(onClick = viewModel::cancelTimer) {
                         Text(
                             stringResource(R.string.light_cancel),
-                            color = if (isNonePattern) Color.White.copy(alpha = 0.5f) else AppColors.TextDim,
+                            color = onBackground.copy(alpha = 0.5f),
                             fontSize = 13.sp
                         )
                     }
@@ -171,14 +176,14 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     Text(
                         text = stringResource(R.string.light_timer_title),
                         fontSize = 16.sp,
-                        color = if (isNonePattern) Color.White.copy(alpha = 0.5f) else AppColors.TextDim
+                        color = onBackground.copy(alpha = 0.5f)
                     )
                 }
             }
         }
 
-        // 조명 (중앙) - 패턴 없음이면 orb 숨김
-        if (!isNonePattern) {
+        // 조명 (중앙) - NONE / WAVE 패턴에서는 orb 숨김
+        if (!isNonePattern && !isWavePattern) {
             LightOrb(
                 color = animatedColor,
                 emoji = state.emoji,
@@ -201,7 +206,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = null,
-                    tint = if (isNonePattern) Color.White.copy(alpha = 0.4f) else AppColors.TextDim,
+                    tint = onBackground.copy(alpha = 0.4f),
                     modifier = Modifier
                         .size(28.dp)
                         .offset(y = hintBounce.dp)
@@ -209,7 +214,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 Text(
                     text = stringResource(R.string.light_swipe_hint),
                     fontSize = 13.sp,
-                    color = if (isNonePattern) Color.White.copy(alpha = 0.3f) else AppColors.TextDim.copy(alpha = 0.7f)
+                    color = onBackground.copy(alpha = 0.3f)
                 )
             }
         }
