@@ -2,7 +2,9 @@ package com.odom.moodlight.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,9 +144,17 @@ private fun GradientSlider(
             .background(brush)
             .onGloballyPositioned { trackSize = it.size }
             .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    if (trackSize.width > 0)
-                        onValueChange((offset.x / trackSize.width).coerceIn(0f, 1f))
+                awaitEachGesture {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull() ?: return@awaitEachGesture
+                    if (trackSize.width > 0 && change.pressed)
+                        onValueChange((change.position.x / trackSize.width).coerceIn(0f, 1f))
+                    change.consume()
+                    drag(change.id) { c ->
+                        c.consume()
+                        if (trackSize.width > 0)
+                            onValueChange((c.position.x / trackSize.width).coerceIn(0f, 1f))
+                    }
                 }
             }
     ) {
