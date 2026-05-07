@@ -65,6 +65,7 @@
     <string name="settings_pattern_starlight">별빛</string>
     <string name="settings_pattern_candle">촛불</string>
     <string name="settings_pattern_wave">파도</string>
+    <string name="settings_pattern_snow">눈송이</string>
     <string name="settings_color_section">색상 커스텀</string>
     <string name="settings_open_color_palette">🎨 색상 팔레트 열기</string>
     <string name="settings_recent_colors">최근 선택한 색상</string>

@@ -23,6 +23,7 @@ fun VisualPatternEffect(
         VisualPattern.STARLIGHT -> StarfieldEffect(modifier = modifier)
         VisualPattern.CANDLE_FLICKER -> CandleFlickerEffect(color = color, modifier = modifier)
         VisualPattern.WAVE -> WaveEffect(modifier = modifier)
+        VisualPattern.SNOWFALL -> SnowfallEffect(modifier = modifier)
     }
 }
 
@@ -59,12 +60,21 @@ private fun StarfieldEffect(modifier: Modifier = Modifier) {
             if (dx * dx + dy * dy < exclusionRadius * exclusionRadius) return@forEach
 
             val alpha = ((sin(time * speed) * 0.5f + 0.5f) * 0.85f + 0.1f).coerceIn(0f, 1f)
-            // 1.5배 크기: 기존 0.8+1.5 → 1.2+2.25
             val radius = (sin(time * speed * 0.7f) * 4.0f + 2.5f).coerceAtLeast(1.2f)
-            drawCircle(
+            
+            // 별 모양 그리기 (사방으로 뻗친 반짝이는 모양)
+            val starPath = Path().apply {
+                moveTo(starX, starY - radius * 2.5f) // 위로 뾰족
+                quadraticTo(starX, starY, starX + radius * 2.5f, starY) // 오른쪽으로 뾰족
+                quadraticTo(starX, starY, starX, starY + radius * 2.5f) // 아래로 뾰족
+                quadraticTo(starX, starY, starX - radius * 2.5f, starY) // 왼쪽으로 뾰족
+                quadraticTo(starX, starY, starX, starY - radius * 2.5f) // 다시 위로
+                close()
+            }
+
+            drawPath(
+                path = starPath,
                 color = Color.White,
-                radius = radius,
-                center = Offset(starX, starY),
                 alpha = alpha
             )
         }
@@ -126,3 +136,62 @@ private fun DrawScope.drawWaves(phase: Float, width: Float, height: Float) {
         drawPath(path = path, color = Color.Black, alpha = waveAlpha)
     }
 }
+
+@Composable
+private fun SnowfallEffect(modifier: Modifier = Modifier) {
+    val snowflakes = remember {
+        List(70) {
+            Snowflake(
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                size = Random.nextFloat() * 6f + 5f,
+                speed = Random.nextFloat() * 0.8f + 0.4f,
+                drift = Random.nextFloat() * 0.5f - 0.25f // 좌우 흔들림
+            )
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "snowfall")
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing)
+        ),
+        label = "time"
+    )
+
+    Canvas(modifier = modifier) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val exclusionRadius = minOf(size.width, size.height) * 0.30f
+
+        snowflakes.forEach { flake ->
+            // 시간에 따른 위치 계산 (위에서 아래로) - 기존 20f에서 5f로 낮추어 속도를 절반으로 조절
+            val currentY = (flake.y * size.height + time * flake.speed * 2f) % size.height
+            // 좌우 흔들림 (Sin 함수 사용) - 흔들림 속도를 줄이기 위해 time에 0.5f를 곱함
+            val currentX = (flake.x * size.width + sin(time * 0.2f + flake.y * 10f) * 3f) % size.width
+            
+            val dx = currentX - cx
+            val dy = currentY - cy
+
+            // 중앙 Orb 영역 제외
+            if (dx * dx + dy * dy < exclusionRadius * exclusionRadius) return@forEach
+
+            drawCircle(
+                color = Color.White,
+                radius = flake.size,
+                center = Offset(currentX, currentY),
+                alpha = 0.7f
+            )
+        }
+    }
+}
+
+private data class Snowflake(
+    val x: Float,
+    val y: Float,
+    val size: Float,
+    val speed: Float,
+    val drift: Float
+)

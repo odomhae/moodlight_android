@@ -177,6 +177,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 VisualPattern.STARLIGHT to stringResource(R.string.settings_pattern_starlight),
                 VisualPattern.CANDLE_FLICKER to stringResource(R.string.settings_pattern_candle),
                 VisualPattern.WAVE to stringResource(R.string.settings_pattern_wave),
+                VisualPattern.SNOWFALL to stringResource(R.string.settings_pattern_snow)
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),

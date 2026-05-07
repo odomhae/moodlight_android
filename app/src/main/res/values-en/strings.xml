@@ -70,6 +70,7 @@
     <string name="settings_pattern_starlight">Stars</string>
     <string name="settings_pattern_candle">Candle</string>
     <string name="settings_pattern_wave">Wave</string>
+    <string name="settings_pattern_snow">Snow</string>
     <string name="settings_color_section">Custom Color</string>
     <string name="settings_open_color_palette">🎨 Open Color Palette</string>
     <string name="settings_recent_colors">Recent Colors</string>
