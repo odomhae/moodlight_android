@@ -22,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.odom.moodlight.R
 import com.odom.moodlight.data.model.SoundType
+import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.component.SoundCard
 import com.odom.moodlight.ui.theme.AppColors
@@ -72,6 +73,12 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
             }
         }
 
+        AdBannerView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(bottom = 8.dp)
+        )
     }
 
     if (showVolumeSheet) {

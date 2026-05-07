@@ -23,7 +23,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -103,15 +102,16 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     val isNonePattern = state.visualPattern == VisualPattern.NONE
     val isWavePattern = state.visualPattern == VisualPattern.WAVE
 
-    // NONE 모드에서는 배경색 밝기에 따라 대비색 사용 (perceived luminance)
+    // NONE 모드에서 배경색 밝기 + 현재 밝기를 합산해 텍스트 대비색 결정
     val perceivedLuminance = animatedColor.red * 0.299f + animatedColor.green * 0.587f + animatedColor.blue * 0.114f
-    val onBackground = if (isNonePattern && perceivedLuminance > 0.45f) Color.Black else Color.White
+    val effectiveLuminance = if (isNonePattern) perceivedLuminance * animatedBrightness else 0f
+    val onBackground = if (isNonePattern && effectiveLuminance > 0.45f) Color.Black else Color.White
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(if (isNonePattern) animatedColor else AppColors.Background)
-            .alpha(animatedBrightness)
+            // alpha는 루트에 적용하지 않음 → 텍스트가 항상 선명하게 유지됨
             .pointerInput(state.sleepMode) {
                 if (!state.sleepMode) {
                     var startY = 0f
@@ -128,16 +128,9 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 }
             }
     ) {
-        if (isNonePattern) {
-            // NONE: solid color, no overlay or orb effects
-        } else {
-            // Subtle color tint background
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(animatedColor.copy(alpha = 0.15f))
-            )
-            // Visual pattern overlay
+        // 패턴 효과 (NONE 이외)
+        if (!isNonePattern) {
+            Box(modifier = Modifier.fillMaxSize().background(animatedColor.copy(alpha = 0.15f)))
             VisualPatternEffect(
                 pattern = state.visualPattern,
                 color = animatedColor,
@@ -145,7 +138,22 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             )
         }
 
-        // 타이머 (상단)
+        // 조명 Orb — 딤 오버레이 아래에 배치해 밝기 조절에 함께 반응
+        if (!isNonePattern && !isWavePattern) {
+            LightOrb(
+                color = animatedColor,
+                emoji = state.emoji,
+                customIconPath = state.customIconPath,
+                size = 240.dp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
+        // 밝기 딤 오버레이 — 배경/Orb만 어둡게, 위의 텍스트는 영향받지 않음
+        val dimAlpha = (1f - animatedBrightness).coerceIn(0f, 0.95f)
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = dimAlpha)))
+
+        // 타이머 (상단) — 오버레이 위에 배치 → 항상 선명
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -182,18 +190,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             }
         }
 
-        // 조명 (중앙) - NONE / WAVE 패턴에서는 orb 숨김
-        if (!isNonePattern && !isWavePattern) {
-            LightOrb(
-                color = animatedColor,
-                emoji = state.emoji,
-                customIconPath = state.customIconPath,
-                size = 240.dp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-
-        // 스와이프 힌트 (하단)
+        // 스와이프 힌트 (하단) — 오버레이 위에 배치 → 항상 선명
         if (!state.sleepMode) {
             Column(
                 modifier = Modifier

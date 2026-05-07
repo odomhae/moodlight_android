@@ -44,6 +44,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
 import com.odom.moodlight.R
 import com.odom.moodlight.data.model.VisualPattern
+import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.component.RewardedAdSheet
@@ -307,6 +308,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         SettingRow(title = stringResource(R.string.settings_app_version), subtitle = state.appVersion) {}
 
+        Spacer(Modifier.height(16.dp))
+        AdBannerView(modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(80.dp))
     }
 
