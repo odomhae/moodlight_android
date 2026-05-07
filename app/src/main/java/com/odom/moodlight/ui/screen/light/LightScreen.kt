@@ -102,15 +102,16 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
     val isNonePattern = state.visualPattern == VisualPattern.NONE
     val isWavePattern = state.visualPattern == VisualPattern.WAVE
 
-    // NONE 모드에서 배경색 밝기 + 현재 밝기를 합산해 텍스트 대비색 결정
+    // NONE·WAVE는 선택 색상이 배경 → 밝기+색 기반 텍스트 대비색 결정
+    val useSolidColorBg = isNonePattern || isWavePattern
     val perceivedLuminance = animatedColor.red * 0.299f + animatedColor.green * 0.587f + animatedColor.blue * 0.114f
-    val effectiveLuminance = if (isNonePattern) perceivedLuminance * animatedBrightness else 0f
-    val onBackground = if (isNonePattern && effectiveLuminance > 0.45f) Color.Black else Color.White
+    val effectiveLuminance = if (useSolidColorBg) perceivedLuminance * animatedBrightness else 0f
+    val onBackground = if (useSolidColorBg && effectiveLuminance > 0.45f) Color.Black else Color.White
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isNonePattern) animatedColor else AppColors.Background)
+            .background(if (useSolidColorBg) animatedColor else AppColors.Background)
             // alpha는 루트에 적용하지 않음 → 텍스트가 항상 선명하게 유지됨
             .pointerInput(state.sleepMode) {
                 if (!state.sleepMode) {
@@ -128,9 +129,13 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 }
             }
     ) {
-        // 패턴 효과 (NONE 이외)
-        if (!isNonePattern) {
+        // 패턴 효과
+        // STARLIGHT/CANDLE: 어두운 배경에 색상 틴트 + 효과
+        // WAVE: 선택 색상이 배경이므로 색상 틴트 불필요, 검정 파도 오버레이만 적용
+        if (!isNonePattern && !isWavePattern) {
             Box(modifier = Modifier.fillMaxSize().background(animatedColor.copy(alpha = 0.15f)))
+        }
+        if (!isNonePattern) {
             VisualPatternEffect(
                 pattern = state.visualPattern,
                 color = animatedColor,
