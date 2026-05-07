@@ -65,4 +65,12 @@
     <string name="settings_permission_explanation">Automatically turns off the screen when the timer ends.</string>
     <string name="settings_leave_review">Leave a review</string>
     <string name="settings_app_version">App Version</string>
+    <string name="settings_visual_pattern_section">Visual Effect</string>
+    <string name="settings_pattern_none">None</string>
+    <string name="settings_pattern_starlight">Stars</string>
+    <string name="settings_pattern_candle">Candle</string>
+    <string name="settings_pattern_wave">Wave</string>
+    <string name="settings_color_section">Custom Color</string>
+    <string name="settings_open_color_palette">🎨 Open Color Palette</string>
+    <string name="settings_recent_colors">Recent Colors</string>
 </resources>

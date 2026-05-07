@@ -31,4 +31,12 @@ class SettingsRepository @Inject constructor(
         return next
     }
     suspend fun setLastTimerMinutes(v: Int) = prefs.setLastTimerMinutes(v)
+
+    val visualPattern: Flow<String> = prefs.visualPattern
+    val selectedColorArgb: Flow<Long> = prefs.selectedColorArgb
+    val recentColors: Flow<String> = prefs.recentColors
+
+    suspend fun setVisualPattern(v: String) = prefs.setVisualPattern(v)
+    suspend fun setSelectedColorArgb(v: Long) = prefs.setSelectedColorArgb(v)
+    suspend fun setRecentColors(v: String) = prefs.setRecentColors(v)
 }

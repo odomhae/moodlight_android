@@ -16,7 +16,10 @@
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 50)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 15)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 20)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 25)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; Set-Location \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew.bat compileDebugKotlin 2>&1 | Select-Object -Last 25)",
+      "Bash(.\\\\gradlew assembleDebug)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 80)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 60)"
     ]
   }
 }

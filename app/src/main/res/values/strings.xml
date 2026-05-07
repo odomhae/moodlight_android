@@ -60,4 +60,12 @@
     <string name="settings_permission_explanation">타이머 종료 시 화면을 자동으로 끕니다.</string>
     <string name="settings_leave_review">리뷰 남기기</string>
     <string name="settings_app_version">앱 버전</string>
+    <string name="settings_visual_pattern_section">시각 효과</string>
+    <string name="settings_pattern_none">없음</string>
+    <string name="settings_pattern_starlight">별빛</string>
+    <string name="settings_pattern_candle">촛불</string>
+    <string name="settings_pattern_wave">파도</string>
+    <string name="settings_color_section">색상 커스텀</string>
+    <string name="settings_open_color_palette">🎨 색상 팔레트 열기</string>
+    <string name="settings_recent_colors">최근 선택한 색상</string>
 </resources>

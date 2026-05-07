@@ -30,6 +30,9 @@ class AppPreferences @Inject constructor(
         val KEY_CUSTOM_ICON_PATH = stringPreferencesKey("custom_icon_path")
         val KEY_ICON_CHANGE_COUNT = intPreferencesKey("icon_change_count")
         val KEY_LAST_TIMER_MINUTES = intPreferencesKey("last_timer_minutes")
+        val KEY_VISUAL_PATTERN = stringPreferencesKey("visual_pattern")
+        val KEY_SELECTED_COLOR_ARGB = longPreferencesKey("selected_color_argb")
+        val KEY_RECENT_COLORS = stringPreferencesKey("recent_colors")
     }
 
     val colorIndex: Flow<Int> = store.data
@@ -75,4 +78,20 @@ class AppPreferences @Inject constructor(
         .map { it[KEY_LAST_TIMER_MINUTES] ?: 0 }
 
     suspend fun setLastTimerMinutes(v: Int) = store.edit { it[KEY_LAST_TIMER_MINUTES] = v }
+
+    val visualPattern: Flow<String> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_VISUAL_PATTERN] ?: "none" }
+
+    val selectedColorArgb: Flow<Long> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_SELECTED_COLOR_ARGB] ?: 0xFFFFD6A0L }
+
+    val recentColors: Flow<String> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_RECENT_COLORS] ?: "" }
+
+    suspend fun setVisualPattern(v: String) = store.edit { it[KEY_VISUAL_PATTERN] = v }
+    suspend fun setSelectedColorArgb(v: Long) = store.edit { it[KEY_SELECTED_COLOR_ARGB] = v }
+    suspend fun setRecentColors(v: String) = store.edit { it[KEY_RECENT_COLORS] = v }
 }

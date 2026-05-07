@@ -7,8 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
+import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
+import com.odom.moodlight.ui.component.addToRecentColors
+import com.odom.moodlight.ui.component.argbLongToColor
+import com.odom.moodlight.ui.component.colorToArgbLong
+import com.odom.moodlight.ui.component.encodeRecentColors
+import com.odom.moodlight.ui.component.parseRecentColors
 import com.odom.moodlight.ui.theme.AppColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -20,8 +26,12 @@ import javax.inject.Inject
 data class LightUiState(
     val lightColor: Color = AppColors.WarmYellow,
     val colorIndex: Int = 0,
+    val isCustomColorSelected: Boolean = false,
+    val selectedCustomColor: Color? = null,
+    val recentCustomColors: List<Color> = emptyList(),
     val brightness: Float = 0.8f,
     val isCycleMode: Boolean = false,
+    val visualPattern: VisualPattern = VisualPattern.NONE,
     val activeSound: SoundType? = null,
     val emoji: String = "🌙",
     val customIconPath: String? = null,
@@ -61,16 +71,31 @@ class LightViewModel @Inject constructor(
             combine(
                 settingsRepository.colorIndex,
                 settingsRepository.brightness,
-                billingRepository.isPro
-            ) { colorIdx, brightness, isPro ->
-                Triple(colorIdx, brightness, isPro)
-            }.collect { (colorIdx, brightness, isPro) ->
+                billingRepository.isPro,
+                settingsRepository.selectedColorArgb,
+                settingsRepository.recentColors
+            ) { colorIdx, brightness, isPro, selectedArgb, recentRaw ->
+                object {
+                    val colorIdx = colorIdx
+                    val brightness = brightness
+                    val isPro = isPro
+                    val selectedArgb = selectedArgb
+                    val recentRaw = recentRaw
+                }
+            }.collect { d ->
+                val presetArgb = colorToArgbLong(AppColors.cycleColors[d.colorIdx])
+                val isCustom = d.selectedArgb != presetArgb &&
+                    AppColors.cycleColors.none { colorToArgbLong(it) == d.selectedArgb }
+                val lightColor = argbLongToColor(d.selectedArgb)
                 _state.update {
                     it.copy(
-                        colorIndex = colorIdx,
-                        lightColor = AppColors.cycleColors[colorIdx],
-                        brightness = brightness,
-                        isPro = isPro
+                        colorIndex = d.colorIdx,
+                        lightColor = lightColor,
+                        brightness = d.brightness,
+                        isPro = d.isPro,
+                        isCustomColorSelected = isCustom,
+                        selectedCustomColor = if (isCustom) lightColor else null,
+                        recentCustomColors = parseRecentColors(d.recentRaw)
                     )
                 }
             }
@@ -87,6 +112,11 @@ class LightViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            settingsRepository.visualPattern.collect { id ->
+                _state.update { it.copy(visualPattern = VisualPattern.fromId(id)) }
+            }
+        }
+        viewModelScope.launch {
             val saved = settingsRepository.lastTimerMinutes.first()
             if (saved > 0) startTimer(saved)
         }
@@ -99,13 +129,42 @@ class LightViewModel @Inject constructor(
 
     fun selectColor(index: Int) {
         cycleJob?.cancel()
-        _state.update { it.copy(colorIndex = index, lightColor = AppColors.cycleColors[index], isCycleMode = false) }
-        viewModelScope.launch { settingsRepository.setColorIndex(index) }
+        val color = AppColors.cycleColors[index]
+        _state.update {
+            it.copy(
+                colorIndex = index,
+                lightColor = color,
+                isCycleMode = false,
+                isCustomColorSelected = false,
+                selectedCustomColor = null
+            )
+        }
+        viewModelScope.launch {
+            settingsRepository.setColorIndex(index)
+            settingsRepository.setSelectedColorArgb(colorToArgbLong(color))
+        }
+    }
+
+    fun selectCustomColor(color: Color) {
+        cycleJob?.cancel()
+        _state.update {
+            it.copy(
+                lightColor = color,
+                isCycleMode = false,
+                isCustomColorSelected = true,
+                selectedCustomColor = color
+            )
+        }
+        viewModelScope.launch {
+            settingsRepository.setSelectedColorArgb(colorToArgbLong(color))
+            val updated = addToRecentColors(_state.value.recentCustomColors, color)
+            settingsRepository.setRecentColors(encodeRecentColors(updated))
+        }
     }
 
     fun toggleCycleMode() {
         val entering = !_state.value.isCycleMode
-        _state.update { it.copy(isCycleMode = entering) }
+        _state.update { it.copy(isCycleMode = entering, isCustomColorSelected = false) }
         if (entering) {
             cycleJob = viewModelScope.launch {
                 while (true) {

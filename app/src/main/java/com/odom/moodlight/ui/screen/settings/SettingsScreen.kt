@@ -43,6 +43,8 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
 import com.odom.moodlight.R
+import com.odom.moodlight.data.model.VisualPattern
+import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.theme.AppColors
@@ -59,6 +61,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val activity = context as? Activity
     val coroutineScope = rememberCoroutineScope()
     var cameraFile by remember { mutableStateOf<File?>(null) }
+    var showColorPalette by remember { mutableStateOf(false) }
 
     val dpm = remember { context.getSystemService(DevicePolicyManager::class.java) }
     val adminComponent = remember { ComponentName(context, MoodLightDeviceAdminReceiver::class.java) }
@@ -83,32 +86,21 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         } else null
     }
 
-    // 전면 광고 관리
     var interstitialAd by remember { mutableStateOf<InterstitialAd?>(null) }
-
     fun loadInterstitialAd() {
-        InterstitialAd.load(
-            context,
-            INTERSTITIAL_AD_UNIT_ID,
-            AdRequest.Builder().build(),
+        InterstitialAd.load(context, INTERSTITIAL_AD_UNIT_ID, AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) { interstitialAd = ad }
                 override fun onAdFailedToLoad(error: LoadAdError) { interstitialAd = null }
-            }
-        )
+            })
     }
-
     LaunchedEffect(Unit) { loadInterstitialAd() }
-
     LaunchedEffect(Unit) {
         viewModel.showInterstitialAd.collect {
             val ad = interstitialAd
             if (ad != null && activity != null) {
                 ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                    override fun onAdDismissedFullScreenContent() {
-                        interstitialAd = null
-                        loadInterstitialAd()
-                    }
+                    override fun onAdDismissedFullScreenContent() { interstitialAd = null; loadInterstitialAd() }
                 }
                 ad.show(activity)
                 interstitialAd = null
@@ -121,17 +113,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
                     val file = File(context.filesDir, "custom_icon.jpg")
-                    val bitmap = context.contentResolver.openInputStream(selectedUri)?.use { input ->
-                        BitmapFactory.decodeStream(input)
-                    } ?: return@launch
-                    val orientation = context.contentResolver.openInputStream(selectedUri)?.use { input ->
-                        ExifInterface(input).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                    val bitmap = context.contentResolver.openInputStream(selectedUri)?.use { BitmapFactory.decodeStream(it) } ?: return@launch
+                    val orientation = context.contentResolver.openInputStream(selectedUri)?.use {
+                        ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
                     } ?: ExifInterface.ORIENTATION_NORMAL
                     val rotated = rotateBitmap(bitmap, orientation)
                     file.outputStream().use { out -> rotated.compress(Bitmap.CompressFormat.JPEG, 90, out) }
                     if (rotated !== bitmap) bitmap.recycle()
                     withContext(Dispatchers.Main) { viewModel.setCustomIconPath(file.absolutePath) }
-                } catch (e: Exception) { }
+                } catch (_: Exception) { }
             }
         }
     }
@@ -147,7 +137,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     File(path).outputStream().use { out -> rotated.compress(Bitmap.CompressFormat.JPEG, 90, out) }
                     if (rotated !== bitmap) bitmap.recycle()
                     withContext(Dispatchers.Main) { viewModel.setCustomIconPath(path) }
-                } catch (e: Exception) { }
+                } catch (_: Exception) { }
             }
         }
     }
@@ -164,15 +154,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         if (!state.isPro) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.showPaywall() },
+                modifier = Modifier.fillMaxWidth().clickable { viewModel.showPaywall() },
                 colors = CardDefaults.cardColors(containerColor = AppColors.WarmYellow.copy(alpha = 0.2f))
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("✨", fontSize = 28.sp)
                     Spacer(Modifier.width(12.dp))
                     Column {
@@ -184,11 +169,63 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             Spacer(Modifier.height(16.dp))
         }
 
-        SettingSection(title = stringResource(R.string.settings_icon_section)) {
+        // 시각적 패턴 섹션
+        SettingSection(title = stringResource(R.string.settings_visual_pattern_section)) {
+            val patterns = listOf(
+                VisualPattern.NONE to stringResource(R.string.settings_pattern_none),
+                VisualPattern.STARLIGHT to stringResource(R.string.settings_pattern_starlight),
+                VisualPattern.CANDLE_FLICKER to stringResource(R.string.settings_pattern_candle),
+                VisualPattern.WAVE to stringResource(R.string.settings_pattern_wave),
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                patterns.forEach { (pattern, label) ->
+                    FilterChip(
+                        selected = state.visualPattern == pattern,
+                        onClick = { viewModel.setVisualPattern(pattern) },
+                        label = { Text(label, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        // 색상 섹션
+        SettingSection(title = stringResource(R.string.settings_color_section)) {
+            OutlinedButton(
+                onClick = { showColorPalette = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.settings_open_color_palette), color = AppColors.TextPrimary)
+            }
+            if (state.recentCustomColors.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.settings_recent_colors), fontSize = 12.sp, color = AppColors.TextDim)
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.recentCustomColors.forEach { color ->
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .then(
+                                    Modifier.clickable { viewModel.selectCustomColor(color) }
+                                )
+                        ) {
+                            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawCircle(color = color)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 아이콘 섹션
+        SettingSection(title = stringResource(R.string.settings_icon_section)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 listOf("🌙", "👶", "🌟", "🐑", "🦋").forEachIndexed { index, emoji ->
                     FilterChip(
                         selected = state.customIconPath == null && state.emojiIndex == index,
@@ -198,10 +235,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = {
                         val file = File(context.filesDir, "custom_icon.jpg")
@@ -227,12 +261,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Image(
-                        bitmap = customBitmap!!,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp).clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                    Image(bitmap = customBitmap!!, contentDescription = null,
+                        modifier = Modifier.size(48.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                     Text(stringResource(R.string.settings_custom_image_active), fontSize = 13.sp, color = AppColors.TextDim)
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = { viewModel.clearCustomIcon() }) {
@@ -287,6 +317,16 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             onDismiss = viewModel::dismissPaywall
         )
     }
+
+    if (showColorPalette) {
+        ColorPaletteSheet(
+            onColorSelected = { color ->
+                viewModel.selectCustomColor(color)
+                showColorPalette = false
+            },
+            onDismiss = { showColorPalette = false }
+        )
+    }
 }
 
 @Composable
@@ -301,17 +341,13 @@ private fun SettingSection(title: String, content: @Composable () -> Unit) {
 @Composable
 private fun SettingRow(title: String, subtitle: String = "", action: @Composable () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
             Text(title, fontSize = 15.sp, color = AppColors.TextPrimary)
-            if (subtitle.isNotEmpty()) {
-                Text(subtitle, fontSize = 13.sp, color = AppColors.TextDim)
-            }
+            if (subtitle.isNotEmpty()) Text(subtitle, fontSize = 13.sp, color = AppColors.TextDim)
         }
         action()
     }
@@ -321,10 +357,7 @@ private fun SettingRow(title: String, subtitle: String = "", action: @Composable
 @Composable
 private fun SettingClickRow(title: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 16.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, fontSize = 15.sp, color = AppColors.TextPrimary)

@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,12 +36,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.odom.moodlight.MoodLightDeviceAdminReceiver
 import com.odom.moodlight.R
-import kotlinx.coroutines.delay
+import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.ui.component.BrightnessSlider
+import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
 import com.odom.moodlight.ui.component.RewardedAdSheet
+import com.odom.moodlight.ui.component.VisualPatternEffect
 import com.odom.moodlight.ui.theme.AppColors
+import kotlinx.coroutines.delay
 
 @Composable
 fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
@@ -96,10 +100,12 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
         label = "hintBounce"
     )
 
+    val isNonePattern = state.visualPattern == VisualPattern.NONE
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.Background)
+            .background(if (isNonePattern) animatedColor else AppColors.Background)
             .alpha(animatedBrightness)
             .pointerInput(state.sleepMode) {
                 if (!state.sleepMode) {
@@ -117,11 +123,22 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 }
             }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(animatedColor.copy(alpha = 0.15f))
-        )
+        if (isNonePattern) {
+            // NONE: solid color, no overlay or orb effects
+        } else {
+            // Subtle color tint background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(animatedColor.copy(alpha = 0.15f))
+            )
+            // Visual pattern overlay
+            VisualPatternEffect(
+                pattern = state.visualPattern,
+                color = animatedColor,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // 타이머 (상단)
         Box(
@@ -138,11 +155,15 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     Text(
                         text = "⏱️ " + formatTimer(state.timerRemainingSeconds),
                         fontSize = 20.sp,
-                        color = AppColors.WarmYellow,
+                        color = if (isNonePattern) Color.White.copy(alpha = 0.8f) else AppColors.WarmYellow,
                         fontWeight = FontWeight.SemiBold
                     )
                     TextButton(onClick = viewModel::cancelTimer) {
-                        Text(stringResource(R.string.light_cancel), color = AppColors.TextDim, fontSize = 13.sp)
+                        Text(
+                            stringResource(R.string.light_cancel),
+                            color = if (isNonePattern) Color.White.copy(alpha = 0.5f) else AppColors.TextDim,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             } else {
@@ -150,20 +171,22 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                     Text(
                         text = stringResource(R.string.light_timer_title),
                         fontSize = 16.sp,
-                        color = AppColors.TextDim
+                        color = if (isNonePattern) Color.White.copy(alpha = 0.5f) else AppColors.TextDim
                     )
                 }
             }
         }
 
-        // 조명 (중앙)
-        LightOrb(
-            color = animatedColor,
-            emoji = state.emoji,
-            customIconPath = state.customIconPath,
-            size = 240.dp,
-            modifier = Modifier.align(Alignment.Center)
-        )
+        // 조명 (중앙) - 패턴 없음이면 orb 숨김
+        if (!isNonePattern) {
+            LightOrb(
+                color = animatedColor,
+                emoji = state.emoji,
+                customIconPath = state.customIconPath,
+                size = 240.dp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
 
         // 스와이프 힌트 (하단)
         if (!state.sleepMode) {
@@ -178,7 +201,7 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = null,
-                    tint = AppColors.TextDim,
+                    tint = if (isNonePattern) Color.White.copy(alpha = 0.4f) else AppColors.TextDim,
                     modifier = Modifier
                         .size(28.dp)
                         .offset(y = hintBounce.dp)
@@ -186,12 +209,12 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
                 Text(
                     text = stringResource(R.string.light_swipe_hint),
                     fontSize = 13.sp,
-                    color = AppColors.TextDim.copy(alpha = 0.7f)
+                    color = if (isNonePattern) Color.White.copy(alpha = 0.3f) else AppColors.TextDim.copy(alpha = 0.7f)
                 )
             }
         }
 
-        // 수면 모드 터치 차단
+        // 수면 모드
         if (state.sleepMode) {
             Box(
                 modifier = Modifier
@@ -214,9 +237,13 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
         ControlBottomSheet(
             selectedIndex = state.colorIndex,
             isCycleMode = state.isCycleMode,
+            recentCustomColors = state.recentCustomColors,
+            isCustomColorSelected = state.isCustomColorSelected,
+            selectedCustomColor = state.selectedCustomColor,
             brightness = state.brightness,
             onColorSelect = viewModel::selectColor,
             onCycleSelect = viewModel::toggleCycleMode,
+            onCustomColorSelect = viewModel::selectCustomColor,
             onBrightnessChange = viewModel::setBrightness,
             onDismiss = { showControlSheet = false }
         )
@@ -252,13 +279,19 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
 private fun ControlBottomSheet(
     selectedIndex: Int,
     isCycleMode: Boolean,
+    recentCustomColors: List<androidx.compose.ui.graphics.Color>,
+    isCustomColorSelected: Boolean,
+    selectedCustomColor: androidx.compose.ui.graphics.Color?,
     brightness: Float,
     onColorSelect: (Int) -> Unit,
     onCycleSelect: () -> Unit,
+    onCustomColorSelect: (androidx.compose.ui.graphics.Color) -> Unit,
     onBrightnessChange: (Float) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showPalette by remember { mutableStateOf(false) }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -281,14 +314,29 @@ private fun ControlBottomSheet(
             ColorPickerRow(
                 selectedIndex = selectedIndex,
                 isCycleMode = isCycleMode,
+                recentCustomColors = recentCustomColors,
+                isCustomColorSelected = isCustomColorSelected,
+                selectedCustomColor = selectedCustomColor,
                 onColorSelect = onColorSelect,
-                onCycleSelect = onCycleSelect
+                onCycleSelect = onCycleSelect,
+                onCustomColorSelect = onCustomColorSelect,
+                onOpenPalette = { showPalette = true }
             )
             BrightnessSlider(
                 brightness = brightness,
                 onBrightnessChange = onBrightnessChange
             )
         }
+    }
+
+    if (showPalette) {
+        ColorPaletteSheet(
+            onColorSelected = { color ->
+                onCustomColorSelect(color)
+                showPalette = false
+            },
+            onDismiss = { showPalette = false }
+        )
     }
 }
 
@@ -335,53 +383,26 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(Modifier.height(16.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 presets.take(3).forEach { (min, label) ->
-                    FilterChip(
-                        selected = selectedMinutes == min,
-                        onClick = { selectedMinutes = min },
-                        label = { Text(label, fontSize = 12.sp) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    FilterChip(selected = selectedMinutes == min, onClick = { selectedMinutes = min },
+                        label = { Text(label, fontSize = 12.sp) }, modifier = Modifier.weight(1f))
                 }
             }
-
             Spacer(Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 presets.drop(3).take(3).forEach { (min, label) ->
-                    FilterChip(
-                        selected = selectedMinutes == min,
-                        onClick = { selectedMinutes = min },
-                        label = { Text(label, fontSize = 12.sp) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    FilterChip(selected = selectedMinutes == min, onClick = { selectedMinutes = min },
+                        label = { Text(label, fontSize = 12.sp) }, modifier = Modifier.weight(1f))
                 }
             }
-
             Spacer(Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 presets.drop(6).forEach { (min, label) ->
-                    FilterChip(
-                        selected = selectedMinutes == min,
-                        onClick = { selectedMinutes = min },
-                        label = { Text(label, fontSize = 12.sp) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    FilterChip(selected = selectedMinutes == min, onClick = { selectedMinutes = min },
+                        label = { Text(label, fontSize = 12.sp) }, modifier = Modifier.weight(1f))
                 }
             }
-
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = { onStart(selectedMinutes) },

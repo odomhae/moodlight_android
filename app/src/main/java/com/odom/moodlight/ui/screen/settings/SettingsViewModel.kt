@@ -1,11 +1,17 @@
 package com.odom.moodlight.ui.screen.settings
 
 import android.app.Activity
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.odom.moodlight.data.RewardedAdManager
+import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
+import com.odom.moodlight.ui.component.addToRecentColors
+import com.odom.moodlight.ui.component.colorToArgbLong
+import com.odom.moodlight.ui.component.encodeRecentColors
+import com.odom.moodlight.ui.component.parseRecentColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -19,6 +25,8 @@ data class SettingsUiState(
     val language: String = "ko",
     val emojiIndex: Int = 0,
     val customIconPath: String? = null,
+    val visualPattern: VisualPattern = VisualPattern.NONE,
+    val recentCustomColors: List<Color> = emptyList(),
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
     val appVersion: String = "1.0",
@@ -37,45 +45,43 @@ class SettingsViewModel @Inject constructor(
     private val _showInterstitialAd = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showInterstitialAd: SharedFlow<Unit> = _showInterstitialAd.asSharedFlow()
 
-    private data class ExtraState(
-        val language: String,
-        val emojiIndex: Int,
-        val customIconPath: String?,
-        val isPro: Boolean,
-        val showPaywall: Boolean
-    )
-
     val state: StateFlow<SettingsUiState> = combine(
+        settingsRepository.colorIndex,
+        settingsRepository.brightness,
+        settingsRepository.language,
+        settingsRepository.emojiIndex,
         combine(
-            settingsRepository.colorIndex,
-            settingsRepository.brightness,
-            settingsRepository.orientation,
-            settingsRepository.autoRestore,
+            settingsRepository.customIconPath,
+            billingRepository.isPro,
+            _showPaywall,
+            settingsRepository.visualPattern,
             combine(
-                settingsRepository.language,
-                settingsRepository.emojiIndex,
-                settingsRepository.customIconPath,
-                billingRepository.isPro,
-                _showPaywall
-            ) { lang, emojiIdx, customPath, isPro, paywall ->
-                ExtraState(lang, emojiIdx, customPath, isPro, paywall)
+                settingsRepository.recentColors,
+                rewardedAdManager.isAdReady
+            ) { recentRaw, adReady -> Pair(recentRaw, adReady) }
+        ) { customPath, isPro, paywall, pattern, (recentRaw, adReady) ->
+            object {
+                val customPath = customPath
+                val isPro = isPro
+                val paywall = paywall
+                val pattern = pattern
+                val recentRaw = recentRaw
+                val adReady = adReady
             }
-        ) { colorIdx, brightness, orientation, autoRestore, extra ->
-            SettingsUiState(
-                colorIndex = colorIdx,
-                brightness = brightness,
-                orientation = orientation,
-                autoRestore = autoRestore,
-                language = extra.language,
-                emojiIndex = extra.emojiIndex,
-                customIconPath = extra.customIconPath,
-                isPro = extra.isPro,
-                showPaywall = extra.showPaywall
-            )
-        },
-        rewardedAdManager.isAdReady
-    ) { partial, isAdReady ->
-        partial.copy(isAdReady = isAdReady)
+        }
+    ) { colorIdx, brightness, lang, emojiIdx, extra ->
+        SettingsUiState(
+            colorIndex = colorIdx,
+            brightness = brightness,
+            language = lang,
+            emojiIndex = emojiIdx,
+            customIconPath = extra.customPath,
+            isPro = extra.isPro,
+            showPaywall = extra.paywall,
+            visualPattern = VisualPattern.fromId(extra.pattern),
+            recentCustomColors = parseRecentColors(extra.recentRaw),
+            isAdReady = extra.adReady
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     private fun onIconChanged() {
@@ -105,6 +111,18 @@ class SettingsViewModel @Inject constructor(
     fun setCustomIconPath(path: String) {
         onIconChanged()
         viewModelScope.launch { settingsRepository.setCustomIconPath(path) }
+    }
+
+    fun setVisualPattern(pattern: VisualPattern) {
+        viewModelScope.launch { settingsRepository.setVisualPattern(pattern.id) }
+    }
+
+    fun selectCustomColor(color: Color) {
+        viewModelScope.launch {
+            settingsRepository.setSelectedColorArgb(colorToArgbLong(color))
+            val updated = addToRecentColors(state.value.recentCustomColors, color)
+            settingsRepository.setRecentColors(encodeRecentColors(updated))
+        }
     }
 
     fun clearCustomIcon() = viewModelScope.launch { settingsRepository.setCustomIconPath("") }
