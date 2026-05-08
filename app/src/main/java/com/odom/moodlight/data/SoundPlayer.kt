@@ -3,10 +3,12 @@ package com.odom.moodlight.data
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import com.odom.moodlight.data.model.LullabyTrack
 import com.odom.moodlight.data.model.SoundType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,29 +16,26 @@ import javax.inject.Singleton
 class SoundPlayer @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val players = mutableMapOf<SoundType, MediaPlayer>()
+    // 백색소음 플레이어 (단일 재생으로 변경)
+    private var whiteNoisePlayer: MediaPlayer? = null
+    private val _activeWhiteNoise = MutableStateFlow<SoundType?>(null)
+    val activeWhiteNoise: StateFlow<SoundType?> = _activeWhiteNoise.asStateFlow()
 
-    private val _activeSounds = MutableStateFlow<Set<SoundType>>(emptySet())
-    val activeSounds: StateFlow<Set<SoundType>> = _activeSounds
+    // 자장가 플레이어
+    private var lullabyPlayer: MediaPlayer? = null
+    private var lullabyPlaylist: List<LullabyTrack> = emptyList()
+    private val _currentLullabyIndex = MutableStateFlow<Int?>(null)
+    val currentLullabyIndex: StateFlow<Int?> = _currentLullabyIndex.asStateFlow()
 
-    private val _volumes = MutableStateFlow<Map<SoundType, Float>>(
-        SoundType.entries.associateWith { 1f }
-    )
-    val volumes: StateFlow<Map<SoundType, Float>> = _volumes
+    // ── 백색소음 ──────────────────────────────────────────────
 
-    fun toggle(sound: SoundType) {
-        if (_activeSounds.value.contains(sound)) stop(sound) else play(sound)
-    }
-
-    fun play(sound: SoundType) {
-        if (players.containsKey(sound)) return
-        val resId = context.resources.getIdentifier(
-            sound.resourceName, "raw", context.packageName
-        )
+    fun playWhiteNoise(sound: SoundType) {
+        stopAll() // 자장가 포함 모두 정지
+        
+        val resId = context.resources.getIdentifier(sound.resourceName, "raw", context.packageName)
         if (resId == 0) return
-        val player = MediaPlayer.create(context, resId) ?: return
-        val storedVolume = _volumes.value[sound] ?: 1f
-        player.apply {
+        
+        whiteNoisePlayer = MediaPlayer.create(context, resId)?.apply {
             isLooping = true
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -44,32 +43,82 @@ class SoundPlayer @Inject constructor(
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
-            setVolume(storedVolume, storedVolume)
             start()
         }
-        players[sound] = player
-        _activeSounds.value = _activeSounds.value + sound
+        _activeWhiteNoise.value = sound
     }
 
-    fun stop(sound: SoundType) {
-        players[sound]?.apply {
-            stop()
-            release()
+    fun stopWhiteNoise() {
+        whiteNoisePlayer?.apply { stop(); release() }
+        whiteNoisePlayer = null
+        _activeWhiteNoise.value = null
+    }
+
+    fun toggleWhiteNoise(sound: SoundType) {
+        if (_activeWhiteNoise.value == sound) {
+            stopWhiteNoise()
+        } else {
+            playWhiteNoise(sound)
         }
-        players.remove(sound)
-        _activeSounds.value = _activeSounds.value - sound
     }
 
     fun stopAll() {
-        players.values.forEach { it.stop(); it.release() }
-        players.clear()
-        _activeSounds.value = emptySet()
+        stopWhiteNoise()
+        stopLullaby()
     }
 
-    fun setVolume(sound: SoundType, volume: Float) {
-        players[sound]?.setVolume(volume, volume)
-        _volumes.value = _volumes.value + (sound to volume)
+    // ── 자장가 플레이리스트 ──────────────────────────────────
+
+    fun playLullaby(track: LullabyTrack, allTracks: List<LullabyTrack>) {
+        stopAll() // 백색소음 포함 모두 정지
+        lullabyPlaylist = allTracks
+        val startIndex = allTracks.indexOf(track).coerceAtLeast(0)
+        playLullabyAtIndex(startIndex, attemptsLeft = allTracks.size)
     }
 
-    fun hasActiveSounds() = players.isNotEmpty()
+    private fun playLullabyAtIndex(index: Int, attemptsLeft: Int) {
+        if (attemptsLeft <= 0) return
+        val track = lullabyPlaylist.getOrNull(index) ?: return
+        val resId = context.resources.getIdentifier(track.resourceName, "raw", context.packageName)
+        
+        if (resId == 0) {
+            val next = (index + 1) % lullabyPlaylist.size
+            playLullabyAtIndex(next, attemptsLeft - 1)
+            return
+        }
+
+        lullabyPlayer?.release()
+        lullabyPlayer = MediaPlayer.create(context, resId)?.apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            setOnCompletionListener {
+                val next = (index + 1) % lullabyPlaylist.size
+                playLullabyAtIndex(next, lullabyPlaylist.size)
+            }
+            start()
+        }
+        _currentLullabyIndex.value = index
+    }
+
+    fun stopLullaby() {
+        lullabyPlayer?.apply { stop(); release() }
+        lullabyPlayer = null
+        lullabyPlaylist = emptyList()
+        _currentLullabyIndex.value = null
+    }
+
+    fun toggleLullaby(track: LullabyTrack, allTracks: List<LullabyTrack>) {
+        val currentIndex = _currentLullabyIndex.value
+        val targetIndex = allTracks.indexOf(track)
+        
+        if (currentIndex != null && allTracks.getOrNull(currentIndex) == track) {
+            stopLullaby()
+        } else {
+            playLullaby(track, allTracks)
+        }
+    }
 }
