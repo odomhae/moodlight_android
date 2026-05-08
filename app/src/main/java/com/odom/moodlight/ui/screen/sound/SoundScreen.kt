@@ -54,7 +54,7 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
         Box(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
             when (state.selectedTab) {
                 SoundTab.LULLABY -> LullabyList(
-                    tracks = state.lullabyTracks,
+                    tracks = viewModel.tracks,
                     currentIndex = state.currentTrackIndex,
                     onTrackClick = viewModel::toggleLullaby
                 )

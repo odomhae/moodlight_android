@@ -27,6 +27,15 @@ class SoundPlayer @Inject constructor(
     private val _currentLullabyIndex = MutableStateFlow<Int?>(null)
     val currentLullabyIndex: StateFlow<Int?> = _currentLullabyIndex.asStateFlow()
 
+    // assets/lullaby/ 폴더의 오디오 파일을 앱 시작 시 한 번 스캔
+    val lullabyTracks: List<LullabyTrack> by lazy {
+        context.assets.list("lullaby")
+            ?.filter { it.endsWith(".mp3", ignoreCase = true) || it.endsWith(".m4a", ignoreCase = true) }
+            ?.sorted()
+            ?.map { LullabyTrack(title = it.substringBeforeLast("."), fileName = it) }
+            ?: emptyList()
+    }
+
     // ── 공통 유틸 ────────────────────────────────────────────
 
     private val audioAttributes = AudioAttributes.Builder()

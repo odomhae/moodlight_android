@@ -15,13 +15,14 @@ data class SoundUiState(
     val selectedTab: SoundTab = SoundTab.LULLABY,
     val currentTrackIndex: Int? = null,
     val activeWhiteNoise: SoundType? = null,
-    val lullabyTracks: List<LullabyTrack> = LullabyTrack.entries
 )
 
 @HiltViewModel
 class SoundViewModel @Inject constructor(
     private val soundPlayer: SoundPlayer
 ) : ViewModel() {
+
+    val tracks: List<LullabyTrack> = soundPlayer.lullabyTracks
 
     private val _selectedTab = MutableStateFlow(SoundTab.LULLABY)
 
@@ -42,8 +43,8 @@ class SoundViewModel @Inject constructor(
     }
 
     fun toggleLullaby(index: Int) {
-        val track = LullabyTrack.entries.getOrNull(index) ?: return
-        soundPlayer.toggleLullaby(track, LullabyTrack.entries)
+        val track = soundPlayer.lullabyTracks.getOrNull(index) ?: return
+        soundPlayer.toggleLullaby(track, soundPlayer.lullabyTracks)
     }
 
     fun toggleWhiteNoise(sound: SoundType) {
