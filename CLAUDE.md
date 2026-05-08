@@ -64,10 +64,12 @@ app/src/main/java/com/odom/moodlight/
 ├── MoodLightDeviceAdminReceiver.kt     # Device admin for screen lock on timer end
 ├── data/
 │   ├── SoundPlayer.kt                  # Singleton MediaPlayer manager
+│   ├── RewardedAdManager.kt            # Rewarded ad flow → grants PRO via SharedPreferences
 │   ├── datastore/
 │   │   └── AppPreferences.kt           # DataStore keys and read/write helpers
 │   ├── model/
-│   │   └── SoundType.kt                # Enum: sound assets, isPro flag
+│   │   ├── SoundType.kt                # Enum: sound assets, isPro flag
+│   │   └── VisualPattern.kt            # Enum: NONE, STARLIGHT, CANDLE_FLICKER, WAVE, SNOWFALL
 │   └── repository/
 │       ├── BillingRepository.kt        # Google Play Billing (IAP)
 │       └── SettingsRepository.kt       # Thin wrapper over AppPreferences
@@ -80,13 +82,15 @@ app/src/main/java/com/odom/moodlight/
     ├── component/
     │   ├── AdBannerView.kt             # AdMob banner ad composable
     │   ├── BrightnessSlider.kt
-    │   ├── ColorPickerRow.kt           # Color chips + rainbow cycle chip
-    │   ├── LightOrb.kt                 # Animated glowing orb (center of Light tab)
+    │   ├── ColorPaletteSheet.kt        # HSL color picker (hue/saturation/lightness sliders + GradientSlider)
+    │   ├── ColorPickerRow.kt           # Preset chips + rainbow + add button + recent custom colors row
+    │   ├── LightOrb.kt                 # Animated glowing orb (hidden for NONE/WAVE patterns)
     │   ├── PaywallBottomSheet.kt       # PRO upgrade bottom sheet
     │   ├── ProBadgeOverlay.kt
     │   ├── SoundCard.kt
     │   ├── SoundChip.kt
     │   ├── TimerArcProgress.kt
+    │   ├── VisualPatternEffect.kt      # Canvas-based pattern renderers (Starfield, Candle, Wave, Snow)
     │   ├── WaveformAnimation.kt
     │   └── WheelPicker.kt
     ├── navigation/
@@ -124,6 +128,7 @@ Three tabs defined in `AppNavigation.kt`:
 
 - Back button triggers an exit confirmation `ModalBottomSheet` with an AdMob banner ad inside.
 - Default start destination: `light`.
+- An interstitial ad fires every 5 tab switches (tracked in `SharedPreferences` inside `AppNavigation.kt`).
 - `ui/screen/timer/` exists but is **not wired into the bottom nav** — it is a standalone timer screen for future integration.
 
 ---
@@ -174,6 +179,33 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
   2. If device admin is active → `DevicePolicyManager.lockNow()` then `finishAndRemoveTask()`
   3. Otherwise → dim screen to `screenBrightness = 0f`, wait 600 ms, then `finishAndRemoveTask()`
 - `LightViewModel.exitApp: SharedFlow<Unit>` drives the exit sequence in `LightScreen`
+
+### Visual patterns
+Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
+
+| Pattern | Effect |
+|---------|--------|
+| `NONE` | Solid background, no overlay |
+| `STARLIGHT` | Canvas particle field with twinkling stars |
+| `CANDLE_FLICKER` | Flickering warm flame particles |
+| `WAVE` | 4 layered sine waves (black-on-color shadow, alpha 0.22→0.07) |
+| `SNOWFALL` | Falling snowflake particles |
+
+- `LightOrb` is hidden for `NONE` and `WAVE` patterns.
+- Patterns render in `VisualPatternEffect.kt` as Canvas composables with a 30%-diameter exclusion zone around center.
+- `WAVE` background equals the selected color (not dark); the black sine waves create a shadow-flow effect.
+
+### HSL color picker
+- `ColorPaletteSheet.kt` contains an HSL picker launched from the `+` button in `ColorPickerRow`.
+- Three `GradientSlider` composables (private) drive hue (0–360°), saturation (0–1), lightness (0–1).
+- `GradientSlider` uses `awaitEachGesture → awaitPointerEvent → drag` for real-time color preview.
+- Selected colors are saved as recent custom colors (max 5) in `LightViewModel`; deduplication threshold is ARGB difference > 100,000.
+
+### Text contrast
+- All overlay text uses perceived luminance: `R×0.299 + G×0.587 + B×0.114`.
+- Formula is applied as `effectiveLuminance = perceivedLuminance × animatedBrightness`.
+- Threshold 0.45: above → black text, below → white text.
+- Brightness dimming is implemented as a black overlay (`Color.Black.copy(alpha = 1 - brightness)`) between the Orb layer and the text layer — the root Box does **not** use `.alpha()`, keeping text always 100% opaque.
 
 ### Center icon / emoji
 - 5 emoji presets: 🌙 👶 🌟 🐑 🦋 (index stored in DataStore)
@@ -236,6 +268,10 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 - Test Interstitial ID: `ca-app-pub-3940256099942544/1033173712` (`INTERSTITIAL_AD_UNIT_ID` constant in `PaywallBottomSheet.kt`)
 - Banner ad shown inside the back-press exit confirmation sheet
 - Interstitial ad shown on every 3rd icon change
+
+### Rewarded ads (alternative PRO unlock)
+- `RewardedAdManager` loads and shows a rewarded ad; on reward callback it writes `is_pro = true` to `SharedPreferences`.
+- `PaywallBottomSheet` shows either "Watch ad" or "loading…" depending on ad readiness.
 
 ### Google Play Billing
 - Product IDs: `babylight_pro_lifetime`, `babylight_pro_monthly`
