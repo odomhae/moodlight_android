@@ -1,80 +1,52 @@
 package com.odom.moodlight.ui.screen.sound
 
-import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.SoundPlayer
+import com.odom.moodlight.data.model.LullabyTrack
 import com.odom.moodlight.data.model.SoundType
-import com.odom.moodlight.data.repository.BillingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
+enum class SoundTab { LULLABY, WHITE_NOISE }
+
 data class SoundUiState(
-    val activeSounds: Set<SoundType> = emptySet(),
-    val volumes: Map<SoundType, Float> = emptyMap(),
-    val isPro: Boolean = false,
-    val showPaywall: Boolean = false,
-    val selectedSoundForVolume: SoundType? = null,
-    val isAdReady: Boolean = false,
+    val selectedTab: SoundTab = SoundTab.LULLABY,
+    val currentTrackIndex: Int? = null,
+    val activeWhiteNoise: SoundType? = null,
+    val lullabyTracks: List<LullabyTrack> = LullabyTrack.entries
 )
 
 @HiltViewModel
 class SoundViewModel @Inject constructor(
-    private val soundPlayer: SoundPlayer,
-    private val billingRepository: BillingRepository,
-    private val rewardedAdManager: RewardedAdManager,
+    private val soundPlayer: SoundPlayer
 ) : ViewModel() {
 
-    private val _showPaywall = MutableStateFlow(false)
-    private val _selectedForVolume = MutableStateFlow<SoundType?>(null)
+    private val _selectedTab = MutableStateFlow(SoundTab.LULLABY)
 
     val state: StateFlow<SoundUiState> = combine(
-        combine(
-            soundPlayer.activeSounds,
-            soundPlayer.volumes,
-            billingRepository.isPro,
-            _showPaywall,
-            _selectedForVolume
-        ) { active, volumes, isPro, showPaywall, selectedForVolume ->
-            SoundUiState(
-                activeSounds = active,
-                volumes = volumes,
-                isPro = isPro,
-                showPaywall = showPaywall,
-                selectedSoundForVolume = selectedForVolume,
-            )
-        },
-        rewardedAdManager.isAdReady
-    ) { partial, isAdReady ->
-        partial.copy(isAdReady = isAdReady)
+        _selectedTab,
+        soundPlayer.currentLullabyIndex,
+        soundPlayer.activeWhiteNoise
+    ) { tab, lullabyIndex, whiteNoise ->
+        SoundUiState(
+            selectedTab = tab,
+            currentTrackIndex = lullabyIndex,
+            activeWhiteNoise = whiteNoise
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SoundUiState())
 
-    fun toggle(sound: SoundType) {
-        if (sound.isPro && !state.value.isPro) {
-            _showPaywall.value = true
-            return
-        }
-        soundPlayer.toggle(sound)
+    fun selectTab(tab: SoundTab) {
+        _selectedTab.value = tab
     }
 
-    fun setVolume(sound: SoundType, volume: Float) {
-        soundPlayer.setVolume(sound, volume)
+    fun toggleLullaby(index: Int) {
+        val track = LullabyTrack.entries.getOrNull(index) ?: return
+        soundPlayer.toggleLullaby(track, LullabyTrack.entries)
     }
 
-    fun selectForVolume(sound: SoundType?) {
-        _selectedForVolume.value = sound
-    }
-
-    fun dismissPaywall() {
-        _showPaywall.value = false
-    }
-
-    fun watchAd(activity: Activity) {
-        rewardedAdManager.show(activity) {
-            billingRepository.setProStatus(true)
-            _showPaywall.value = false
-        }
+    fun toggleWhiteNoise(sound: SoundType) {
+        soundPlayer.toggleWhiteNoise(sound)
     }
 }
