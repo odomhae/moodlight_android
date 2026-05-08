@@ -12,8 +12,7 @@ enum class SoundType(
     RAIN("🌧️", R.string.sound_rain, false, "rain"),
     WAVE("🌊", R.string.sound_wave, false, "wave"),
     FOREST("🌲", R.string.sound_forest, false, "forest"),
-    FIRE("🔥", R.string.sound_fire, true, "fire"),
-    LULLABY("🎵", R.string.sound_lullaby, true, "lullaby"),
-    PIANO("🎹", R.string.sound_piano, true, "piano"),
-    WIND("🌬️", R.string.sound_wind, true, "wind"),
+    FIRE("🔥", R.string.sound_fire, false, "fire"),
+    PIANO("🎹", R.string.sound_piano, false, "piano"),
+    WIND("🌬️", R.string.sound_wind, false, "wind"),
 }
