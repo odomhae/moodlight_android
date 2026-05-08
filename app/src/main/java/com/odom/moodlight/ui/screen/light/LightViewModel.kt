@@ -179,6 +179,7 @@ class LightViewModel @Inject constructor(
     }
 
     fun setBrightness(value: Float) {
+
         _state.update { it.copy(brightness = value) }
         viewModelScope.launch { settingsRepository.setBrightness(value) }
     }
@@ -198,17 +199,12 @@ class LightViewModel @Inject constructor(
     }
 
     fun toggleSound(sound: SoundType) {
-        if (sound.isPro && !_state.value.isPro) {
-            _state.update { it.copy(showPaywall = true) }
-            return
-        }
         val current = _state.value.activeSound
         if (current == sound) {
-            soundPlayer.stop(sound)
+            soundPlayer.stopWhiteNoise()
             _state.update { it.copy(activeSound = null) }
         } else {
-            current?.let { soundPlayer.stop(it) }
-            soundPlayer.play(sound)
+            soundPlayer.playWhiteNoise(sound)
             _state.update { it.copy(activeSound = sound) }
         }
     }
