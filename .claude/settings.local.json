@@ -28,7 +28,17 @@
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 30)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 10)",
       "Bash(dir C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\\\\app\\\\src\\\\main\\\\java\\\\com\\\\odom\\\\moodlight *)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 50)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android\"; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 50)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "PowerShell(tail *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 100)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android; .\\\\gradlew assembleDebug 2>&1 | Select-String -Pattern \"BUILD|error:|warning:\" | Select-Object -Last 30)",
+      "Bash(git checkout *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android; .\\\\gradlew assembleDebug 2>&1 | Select-String -Pattern \"BUILD|error:\" | Select-Object -Last 10)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android; .\\\\gradlew assembleDebug 2>&1 | Select-String -Pattern \"BUILD|error:|Error\" | Select-Object -Last 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd C:\\\\Users\\\\student\\\\StudioProjects\\\\MoodLight_Android; .\\\\gradlew assembleDebug 2>&1 | Select-String -Pattern \"BUILD|error:\" | Select-Object -Last 15)",
+      "Bash(git rm *)"
     ]
   }
 }
