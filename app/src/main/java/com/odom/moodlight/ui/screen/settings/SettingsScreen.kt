@@ -14,10 +14,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -173,23 +176,38 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         // 시각적 패턴 섹션
         SettingSection(title = stringResource(R.string.settings_visual_pattern_section)) {
             val patterns = listOf(
-                VisualPattern.NONE to stringResource(R.string.settings_pattern_none),
-                VisualPattern.STARLIGHT to stringResource(R.string.settings_pattern_starlight),
-                VisualPattern.CANDLE_FLICKER to stringResource(R.string.settings_pattern_candle),
-                VisualPattern.WAVE to stringResource(R.string.settings_pattern_wave),
-                VisualPattern.SNOWFALL to stringResource(R.string.settings_pattern_snow)
+                VisualPattern.NONE to "❌",
+                VisualPattern.STARLIGHT to "✨",
+                VisualPattern.CANDLE_FLICKER to "🕯️",
+                VisualPattern.WAVE to "🌊",
+                VisualPattern.SNOWFALL to "❄️"
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                patterns.forEach { (pattern, label) ->
-                    FilterChip(
-                        selected = state.visualPattern == pattern,
-                        onClick = { viewModel.setVisualPattern(pattern) },
-                        label = { Text(label, fontSize = 12.sp) },
-                        modifier = Modifier.weight(1f)
-                    )
+                patterns.forEach { (pattern, icon) ->
+                    val isSelected = state.visualPattern == pattern
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) AppColors.TextPrimary.copy(alpha = 0.12f)
+                                else AppColors.Background.copy(alpha = 0.6f)
+                            )
+                            .border(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) AppColors.TextPrimary.copy(alpha = 0.7f)
+                                        else AppColors.Border,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable { viewModel.setVisualPattern(pattern) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(icon, fontSize = 22.sp)
+                    }
                 }
             }
         }

@@ -183,6 +183,11 @@ class LightViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setBrightness(value) }
     }
 
+    fun setVisualPattern(pattern: VisualPattern) {
+        _state.update { it.copy(visualPattern = pattern) }
+        viewModelScope.launch { settingsRepository.setVisualPattern(pattern.id) }
+    }
+
     fun nextEmoji() {
         currentEmojiIndex = (currentEmojiIndex + 1) % emojis.size
         _state.update { it.copy(emoji = emojis[currentEmojiIndex], customIconPath = null) }

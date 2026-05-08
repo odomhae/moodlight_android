@@ -124,7 +124,16 @@ fun AppNavigation() {
             startDestination = Screen.Light.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Light.route) { LightScreen() }
+            composable(Screen.Light.route) {
+                LightScreen(
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route) {
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
             composable(Screen.Sound.route) { SoundScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
         }

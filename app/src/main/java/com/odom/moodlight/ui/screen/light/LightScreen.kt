@@ -15,9 +15,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,7 +49,10 @@ import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.delay
 
 @Composable
-fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
+fun LightScreen(
+    viewModel: LightViewModel = hiltViewModel(),
+    onNavigateToSettings: () -> Unit = {}
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -248,10 +254,16 @@ fun LightScreen(viewModel: LightViewModel = hiltViewModel()) {
             isCustomColorSelected = state.isCustomColorSelected,
             selectedCustomColor = state.selectedCustomColor,
             brightness = state.brightness,
+            visualPattern = state.visualPattern,
             onColorSelect = viewModel::selectColor,
             onCycleSelect = viewModel::toggleCycleMode,
             onCustomColorSelect = viewModel::selectCustomColor,
             onBrightnessChange = viewModel::setBrightness,
+            onPatternSelect = viewModel::setVisualPattern,
+            onNavigateToSettings = {
+                showControlSheet = false
+                onNavigateToSettings()
+            },
             onDismiss = { showControlSheet = false }
         )
     }
@@ -290,10 +302,13 @@ private fun ControlBottomSheet(
     isCustomColorSelected: Boolean,
     selectedCustomColor: androidx.compose.ui.graphics.Color?,
     brightness: Float,
+    visualPattern: VisualPattern,
     onColorSelect: (Int) -> Unit,
     onCycleSelect: () -> Unit,
     onCustomColorSelect: (androidx.compose.ui.graphics.Color) -> Unit,
     onBrightnessChange: (Float) -> Unit,
+    onPatternSelect: (VisualPattern) -> Unit,
+    onNavigateToSettings: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -333,6 +348,20 @@ private fun ControlBottomSheet(
                 brightness = brightness,
                 onBrightnessChange = onBrightnessChange
             )
+            PatternPickerRow(
+                selected = visualPattern,
+                onSelect = onPatternSelect
+            )
+            TextButton(
+                onClick = onNavigateToSettings,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    "⚙️ ${stringResource(R.string.settings_title)}",
+                    fontSize = 13.sp,
+                    color = AppColors.TextDim
+                )
+            }
         }
     }
 
@@ -417,6 +446,55 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.WarmYellow)
             ) {
                 Text(stringResource(R.string.light_start), color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PatternPickerRow(
+    selected: VisualPattern,
+    onSelect: (VisualPattern) -> Unit
+) {
+    val items = listOf(
+        VisualPattern.NONE to "❌",
+        VisualPattern.STARLIGHT to "✨",
+        VisualPattern.CANDLE_FLICKER to "🕯️",
+        VisualPattern.WAVE to "🌊",
+        VisualPattern.SNOWFALL to "❄️",
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            stringResource(R.string.settings_visual_pattern_section),
+            fontSize = 13.sp,
+            color = AppColors.TextDim
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items.forEach { (pattern, icon) ->
+                val isSelected = selected == pattern
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSelected) AppColors.TextPrimary.copy(alpha = 0.12f)
+                            else AppColors.Background.copy(alpha = 0.6f)
+                        )
+                        .border(
+                            width = if (isSelected) 1.5.dp else 1.dp,
+                            color = if (isSelected) AppColors.TextPrimary.copy(alpha = 0.7f)
+                                    else AppColors.Border,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable { onSelect(pattern) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(icon, fontSize = 22.sp)
+                }
             }
         }
     }
