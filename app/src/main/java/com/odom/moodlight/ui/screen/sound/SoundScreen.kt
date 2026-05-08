@@ -144,7 +144,6 @@ private fun WhiteNoiseGrid(
             SoundCard(
                 sound = sound,
                 isActive = activeSound == sound,
-                isPro = false,
                 onToggle = { onSoundClick(sound) }
             )
         }

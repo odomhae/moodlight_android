@@ -1,6 +1,5 @@
 package com.odom.moodlight.ui.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -20,51 +19,43 @@ import com.odom.moodlight.ui.theme.AppColors
 fun SoundCard(
     sound: SoundType,
     isActive: Boolean,
-    isPro: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isActive)
-                    AppColors.TextPrimary.copy(alpha = 0.15f)
-                else
-                    AppColors.Panel
-            )
+    Card(
+        modifier = modifier,
+        onClick = onToggle,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive) AppColors.TextPrimary.copy(alpha = 0.15f)
+                             else AppColors.Panel
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(text = sound.emoji, fontSize = 36.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(id = sound.labelResId),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.TextPrimary
+            Text(text = sound.emoji, fontSize = 36.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(id = sound.labelResId),
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.TextPrimary
+            )
+            Spacer(Modifier.height(8.dp))
+            if (isActive) {
+                WaveformAnimation(
+                    color = AppColors.WarmYellow,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
-                Spacer(Modifier.height(8.dp))
-                if (isActive) {
-                    WaveformAnimation(
-                        color = AppColors.WarmYellow,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-                IconButton(onClick = onToggle) {
-                    Icon(
-                        imageVector = if (isActive) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isActive) stringResource(id = R.string.sound_stop) else stringResource(id = R.string.sound_play),
-                        tint = AppColors.TextPrimary
-                    )
-                }
             }
-        }
-        if (sound.isPro && !isPro) {
-            ProBadgeOverlay(modifier = Modifier.matchParentSize().clickable(onClick = onToggle))
+            Icon(
+                imageVector = if (isActive) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isActive) stringResource(R.string.sound_stop)
+                                     else stringResource(R.string.sound_play),
+                tint = AppColors.TextPrimary
+            )
         }
     }
 }
