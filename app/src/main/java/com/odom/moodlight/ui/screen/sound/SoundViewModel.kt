@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.LullabyTrack
 import com.odom.moodlight.data.model.SoundType
+import com.odom.moodlight.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class SoundTab { LULLABY, WHITE_NOISE }
@@ -19,7 +21,8 @@ data class SoundUiState(
 
 @HiltViewModel
 class SoundViewModel @Inject constructor(
-    private val soundPlayer: SoundPlayer
+    private val soundPlayer: SoundPlayer,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     val tracks: List<LullabyTrack> = soundPlayer.lullabyTracks
@@ -44,10 +47,20 @@ class SoundViewModel @Inject constructor(
 
     fun toggleLullaby(index: Int) {
         val track = soundPlayer.lullabyTracks.getOrNull(index) ?: return
+        val isStopping = state.value.currentTrackIndex == index
         soundPlayer.toggleLullaby(track, soundPlayer.lullabyTracks)
+        viewModelScope.launch {
+            if (isStopping) settingsRepository.setSavedSound("NONE", "")
+            else settingsRepository.setSavedSound("LULLABY", "")
+        }
     }
 
     fun toggleWhiteNoise(sound: SoundType) {
+        val isStopping = state.value.activeWhiteNoise == sound
         soundPlayer.toggleWhiteNoise(sound)
+        viewModelScope.launch {
+            if (isStopping) settingsRepository.setSavedSound("NONE", "")
+            else settingsRepository.setSavedSound("WHITE_NOISE", sound.name)
+        }
     }
 }

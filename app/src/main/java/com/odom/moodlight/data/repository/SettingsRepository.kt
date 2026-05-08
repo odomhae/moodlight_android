@@ -39,4 +39,8 @@ class SettingsRepository @Inject constructor(
     suspend fun setVisualPattern(v: String) = prefs.setVisualPattern(v)
     suspend fun setSelectedColorArgb(v: Long) = prefs.setSelectedColorArgb(v)
     suspend fun setRecentColors(v: String) = prefs.setRecentColors(v)
+
+    val savedSoundMode: Flow<String> = prefs.savedSoundMode
+    val savedSoundName: Flow<String> = prefs.savedSoundName
+    suspend fun setSavedSound(mode: String, name: String) = prefs.setSavedSound(mode, name)
 }

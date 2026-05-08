@@ -165,30 +165,27 @@ fun LightScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = dimAlpha)))
 
         // 타이머 (상단) — 오버레이 위에 배치 → 항상 선명
-        Box(
+        Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             if (state.isTimerRunning) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Text(
+                    text = "⏱️ " + formatTimer(state.timerRemainingSeconds),
+                    fontSize = 20.sp,
+                    color = onBackground.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.SemiBold
+                )
+                TextButton(onClick = viewModel::cancelTimer) {
                     Text(
-                        text = "⏱️ " + formatTimer(state.timerRemainingSeconds),
-                        fontSize = 20.sp,
-                        color = onBackground.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.SemiBold
+                        stringResource(R.string.light_cancel),
+                        color = onBackground.copy(alpha = 0.5f),
+                        fontSize = 13.sp
                     )
-                    TextButton(onClick = viewModel::cancelTimer) {
-                        Text(
-                            stringResource(R.string.light_cancel),
-                            color = onBackground.copy(alpha = 0.5f),
-                            fontSize = 13.sp
-                        )
-                    }
                 }
             } else {
                 TextButton(onClick = { showTimerSheet = true }) {
@@ -198,6 +195,13 @@ fun LightScreen(
                         color = onBackground.copy(alpha = 0.5f)
                     )
                 }
+            }
+            state.savedSoundEmoji?.let { emoji ->
+                Text(
+                    text = emoji,
+                    fontSize = 20.sp,
+                    color = onBackground.copy(alpha = 0.7f)
+                )
             }
         }
 

@@ -8,6 +8,7 @@ import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.data.model.VisualPattern
+import kotlinx.coroutines.flow.combine
 import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
 import com.odom.moodlight.ui.component.addToRecentColors
@@ -43,6 +44,7 @@ data class LightUiState(
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
     val isAdReady: Boolean = false,
+    val savedSoundEmoji: String? = null,   // 사운드 탭에서 마지막으로 선택한 항목 이모지
 )
 
 @HiltViewModel
@@ -119,6 +121,20 @@ class LightViewModel @Inject constructor(
         viewModelScope.launch {
             val saved = settingsRepository.lastTimerMinutes.first()
             if (saved > 0) startTimer(saved)
+        }
+        viewModelScope.launch {
+            combine(
+                settingsRepository.savedSoundMode,
+                settingsRepository.savedSoundName
+            ) { mode, name ->
+                when (mode) {
+                    "LULLABY" -> "🎵"
+                    "WHITE_NOISE" -> SoundType.entries.find { it.name == name }?.emoji
+                    else -> null
+                }
+            }.collect { emoji ->
+                _state.update { it.copy(savedSoundEmoji = emoji) }
+            }
         }
         viewModelScope.launch {
             rewardedAdManager.isAdReady.collect { isReady ->

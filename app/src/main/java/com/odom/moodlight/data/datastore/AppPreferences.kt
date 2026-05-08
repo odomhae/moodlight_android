@@ -33,6 +33,8 @@ class AppPreferences @Inject constructor(
         val KEY_VISUAL_PATTERN = stringPreferencesKey("visual_pattern")
         val KEY_SELECTED_COLOR_ARGB = longPreferencesKey("selected_color_argb")
         val KEY_RECENT_COLORS = stringPreferencesKey("recent_colors")
+        val KEY_SAVED_SOUND_MODE = stringPreferencesKey("saved_sound_mode")  // "NONE" | "LULLABY" | "WHITE_NOISE"
+        val KEY_SAVED_SOUND_NAME = stringPreferencesKey("saved_sound_name")  // WHITE_NOISE 선택 시 SoundType.name
     }
 
     val colorIndex: Flow<Int> = store.data
@@ -94,4 +96,17 @@ class AppPreferences @Inject constructor(
     suspend fun setVisualPattern(v: String) = store.edit { it[KEY_VISUAL_PATTERN] = v }
     suspend fun setSelectedColorArgb(v: Long) = store.edit { it[KEY_SELECTED_COLOR_ARGB] = v }
     suspend fun setRecentColors(v: String) = store.edit { it[KEY_RECENT_COLORS] = v }
+
+    val savedSoundMode: Flow<String> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_SAVED_SOUND_MODE] ?: "NONE" }
+
+    val savedSoundName: Flow<String> = store.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[KEY_SAVED_SOUND_NAME] ?: "" }
+
+    suspend fun setSavedSound(mode: String, name: String) = store.edit {
+        it[KEY_SAVED_SOUND_MODE] = mode
+        it[KEY_SAVED_SOUND_NAME] = name
+    }
 }
