@@ -44,7 +44,8 @@ data class LightUiState(
     val isPro: Boolean = false,
     val showPaywall: Boolean = false,
     val isAdReady: Boolean = false,
-    val savedSoundEmoji: String? = null,   // 사운드 탭에서 마지막으로 선택한 항목 이모지
+    val soundButtonEmoji: String = "🔇",
+    val isSoundActive: Boolean = false,
 )
 
 @HiltViewModel
@@ -119,21 +120,39 @@ class LightViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            val saved = settingsRepository.lastTimerMinutes.first()
-            if (saved > 0) startTimer(saved)
+            val savedMinutes = settingsRepository.lastTimerMinutes.first()
+            val savedMode = settingsRepository.savedSoundMode.first()
+            val savedName = settingsRepository.savedSoundName.first()
+            if (savedMinutes > 0) startTimer(savedMinutes)
+            when (savedMode) {
+                "LULLABY" -> {
+                    val tracks = soundPlayer.lullabyTracks
+                    if (tracks.isNotEmpty()) soundPlayer.playLullaby(tracks[0], tracks)
+                }
+                "WHITE_NOISE" -> {
+                    val sound = SoundType.entries.find { it.name == savedName } ?: SoundType.RAIN
+                    soundPlayer.playWhiteNoise(sound)
+                }
+            }
         }
         viewModelScope.launch {
             combine(
+                soundPlayer.activeWhiteNoise,
+                soundPlayer.currentLullabyIndex,
                 settingsRepository.savedSoundMode,
                 settingsRepository.savedSoundName
-            ) { mode, name ->
-                when (mode) {
-                    "LULLABY" -> "🎵"
-                    "WHITE_NOISE" -> SoundType.entries.find { it.name == name }?.emoji
-                    else -> null
+            ) { activeWhiteNoise, lullabyIndex, savedMode, savedName ->
+                val isActive = lullabyIndex != null || activeWhiteNoise != null
+                val emoji = when {
+                    lullabyIndex != null -> "🎵"
+                    activeWhiteNoise != null -> activeWhiteNoise.emoji
+                    savedMode == "LULLABY" -> "🎵"
+                    savedMode == "WHITE_NOISE" -> SoundType.entries.find { it.name == savedName }?.emoji ?: "🔇"
+                    else -> "🔇"
                 }
-            }.collect { emoji ->
-                _state.update { it.copy(savedSoundEmoji = emoji) }
+                emoji to isActive
+            }.collect { (emoji, isActive) ->
+                _state.update { it.copy(soundButtonEmoji = emoji, isSoundActive = isActive) }
             }
         }
         viewModelScope.launch {
@@ -214,6 +233,36 @@ class LightViewModel @Inject constructor(
         }
     }
 
+    fun cycleSoundMode() {
+        val activeWhiteNoise = soundPlayer.activeWhiteNoise.value
+        val activeLullabyIndex = soundPlayer.currentLullabyIndex.value
+        viewModelScope.launch {
+            when {
+                activeLullabyIndex != null -> {
+                    // 자장가 재생 중 → 소리 꺼짐
+                    soundPlayer.stopAll()
+                    settingsRepository.setSavedSound("NONE", "")
+                }
+                activeWhiteNoise != null -> {
+                    // 백색소음 재생 중 → 자장가로 전환
+                    soundPlayer.stopWhiteNoise()
+                    val tracks = soundPlayer.lullabyTracks
+                    if (tracks.isNotEmpty()) {
+                        soundPlayer.playLullaby(tracks[0], tracks)
+                        settingsRepository.setSavedSound("LULLABY", "")
+                    }
+                }
+                else -> {
+                    // 소리 꺼짐 → 백색소음 시작 (저장된 소리 사용, 없으면 RAIN)
+                    val savedName = settingsRepository.savedSoundName.first()
+                    val sound = SoundType.entries.find { it.name == savedName } ?: SoundType.RAIN
+                    soundPlayer.playWhiteNoise(sound)
+                    settingsRepository.setSavedSound("WHITE_NOISE", sound.name)
+                }
+            }
+        }
+    }
+
     fun toggleSound(sound: SoundType) {
         val current = _state.value.activeSound
         if (current == sound) {
@@ -259,6 +308,7 @@ class LightViewModel @Inject constructor(
 
     fun cancelTimer() {
         timerJob?.cancel()
+        soundPlayer.stopAll()
         _state.update { it.copy(isTimerRunning = false, timerRemainingSeconds = 0) }
     }
 

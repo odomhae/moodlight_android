@@ -196,11 +196,15 @@ fun LightScreen(
                     )
                 }
             }
-            state.savedSoundEmoji?.let { emoji ->
+            Box(
+                modifier = Modifier
+                    .clickable { viewModel.cycleSoundMode() }
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+            ) {
                 Text(
-                    text = emoji,
+                    text = state.soundButtonEmoji,
                     fontSize = 20.sp,
-                    color = onBackground.copy(alpha = 0.7f)
+                    color = onBackground.copy(alpha = if (state.isSoundActive) 0.9f else 0.4f)
                 )
             }
         }
@@ -274,6 +278,7 @@ fun LightScreen(
 
     if (showTimerSheet) {
         TimerBottomSheet(
+            initialMinutes = state.timerMinutes.takeIf { it > 0 } ?: 30,
             onDismiss = { showTimerSheet = false },
             onStart = { minutes ->
                 viewModel.startTimer(minutes)
@@ -389,7 +394,7 @@ private fun formatTimer(seconds: Int): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
+private fun TimerBottomSheet(initialMinutes: Int = 30, onDismiss: () -> Unit, onStart: (Int) -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val presets = listOf(
         1 to "1" + stringResource(R.string.light_unit_min),
@@ -402,7 +407,7 @@ private fun TimerBottomSheet(onDismiss: () -> Unit, onStart: (Int) -> Unit) {
         300 to "5" + stringResource(R.string.light_unit_hour),
         360 to "6" + stringResource(R.string.light_unit_hour)
     )
-    var selectedMinutes by remember { mutableIntStateOf(30) }
+    var selectedMinutes by remember { mutableIntStateOf(initialMinutes) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

@@ -63,12 +63,13 @@ app/src/main/java/com/odom/moodlight/
 ├── MoodLightApplication.kt             # Hilt application class
 ├── MoodLightDeviceAdminReceiver.kt     # Device admin for screen lock on timer end
 ├── data/
-│   ├── SoundPlayer.kt                  # Singleton MediaPlayer manager
+│   ├── SoundPlayer.kt                  # Singleton MediaPlayer manager (separate players for lullaby vs white noise)
 │   ├── RewardedAdManager.kt            # Rewarded ad flow → grants PRO via SharedPreferences
 │   ├── datastore/
 │   │   └── AppPreferences.kt           # DataStore keys and read/write helpers
 │   ├── model/
-│   │   ├── SoundType.kt                # Enum: sound assets, isPro flag
+│   │   ├── LullabyTrack.kt             # Data class: title + fileName, dynamically scanned from assets/lullaby/
+│   │   ├── SoundType.kt                # Enum: white noise assets (RAIN, WAVE, FOREST, FIRE, WIND)
 │   │   └── VisualPattern.kt            # Enum: NONE, STARLIGHT, CANDLE_FLICKER, WAVE, SNOWFALL
 │   └── repository/
 │       ├── BillingRepository.kt        # Google Play Billing (IAP)
@@ -213,6 +214,11 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 - EXIF rotation is corrected on save (`rotateBitmap()` in `SettingsScreen.kt`)
 - `nextEmoji()` in `LightViewModel` cycles through presets and clears custom image
 
+### Sound status display
+- `savedSoundEmoji: String?` in `LightUiState` shows the last-selected sound emoji next to the timer area
+- 🎵 for any lullaby track, or the SoundType's own emoji for white noise
+- Persisted across restarts via `KEY_SAVED_SOUND_MODE` / `KEY_SAVED_SOUND_NAME` DataStore keys
+
 ---
 
 ## Settings Tab (`SettingsScreen` / `SettingsViewModel`)
@@ -229,6 +235,8 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 | `auto_restore` | Boolean | true | Always true — not shown in UI |
 | `orientation` | String | "portrait" | Not shown in UI (reserved) |
 | `language` | String | "ko" | Not shown in UI (reserved) |
+| `saved_sound_mode` | String | "NONE" | Last active sound tab: "NONE" \| "LULLABY" \| "WHITE_NOISE" |
+| `saved_sound_name` | String | "" | For WHITE_NOISE: `SoundType.name` of the last played sound |
 
 ### Interstitial ad trigger
 - Every **3rd icon change** (emoji preset or custom image) triggers an interstitial ad
@@ -252,12 +260,25 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 
 ## Sound Tab (`SoundScreen` / `SoundViewModel`)
 
-- Free sounds: 🌧️ Rain, 🌊 Wave, 🌲 Forest
-- PRO sounds: 🔥 Fire, 🎵 Lullaby, 🎹 Piano, 🌬️ Wind
-- `SoundPlayer` (Hilt `@Singleton`) manages `MediaPlayer` instances keyed by `SoundType`
-- Multiple sounds can be active simultaneously; each has an independent volume
-- PRO gate: tapping a PRO sound when not PRO shows `PaywallBottomSheet`
-- `AudioService` is a foreground service (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`) that keeps audio running when the app is backgrounded; it binds to `SoundPlayer`
+The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WHITE_NOISE`). Sound selection is **mutually exclusive** — playing one stops the other. There are no per-sound volume controls.
+
+### Lullaby sub-tab
+- Tracks are **dynamically scanned** from `assets/lullaby/` at `SoundPlayer` init via `context.assets.list("lullaby")`
+- `LullabyTrack(title, fileName)` — title is the filename minus extension
+- Adding or removing MP3 files from `assets/lullaby/` updates the list with no code changes
+- `SoundPlayer.playLullabyAtIndex(index)` auto-skips missing files and loops the playlist via `setOnCompletionListener`
+- State tracks `currentTrackIndex: Int?`; toggling the same index stops playback
+
+### White Noise sub-tab
+- Five hardcoded `SoundType` enum entries: `RAIN`, `WAVE`, `FOREST`, `FIRE`, `WIND` — all `isPro = false`
+- Audio files live in `assets/whiteSound/{fileName}` (defined per enum entry)
+- **Asset mismatch warning**: `assets/whiteSound/` also contains `birds.mp3`, `Shhh.m4a`, `shoppingmall.m4a`, `vinyl.m4a` which are **not wired** to any `SoundType`; `FOREST` references `forest.mp3` which may not exist — tapping it fails silently. Reconcile when adding new sounds.
+- To add a new white noise sound: add the file to `assets/whiteSound/` **and** add a `SoundType` enum entry with the matching `fileName`
+
+### AudioService
+- Foreground service (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`) started via `Intent(ACTION_START)` / stopped via `Intent(ACTION_STOP)`
+- Inner `AudioBinder` exposes `getPlayer(): SoundPlayer` to bound clients
+- Notification text: "아기 야간등" / "사운드 재생 중"
 
 ---
 
