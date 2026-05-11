@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.odom.moodlight.R
 import com.odom.moodlight.data.model.LullabyTrack
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.ui.component.AdBannerView
@@ -42,7 +44,7 @@ fun SoundScreen(viewModel: SoundViewModel = hiltViewModel()) {
                     onClick = { viewModel.selectTab(tab) },
                     text = {
                         Text(
-                            text = if (tab == SoundTab.LULLABY) "🎵 자장가" else "🌊 백색소음",
+                            text = if (tab == SoundTab.LULLABY) stringResource(R.string.sound_tab_lullaby) else stringResource(R.string.sound_tab_white_noise),
                             fontSize = 15.sp,
                             fontWeight = if (state.selectedTab == tab) FontWeight.Bold else FontWeight.Normal
                         )

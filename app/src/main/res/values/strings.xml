@@ -5,6 +5,8 @@
     <string name="tab_settings">설정</string>
     <string name="sound_screen_volume_btn">🎚️ 볼륨</string>
     <string name="sound_screen_volume_settings_title">볼륨 설정</string>
+    <string name="sound_tab_lullaby">🎵 자장가</string>
+    <string name="sound_tab_white_noise">🌊 백색소음</string>
     <string name="sound_stop">정지</string>
     <string name="sound_play">재생</string>
     <string name="sound_rain">빗소리</string>

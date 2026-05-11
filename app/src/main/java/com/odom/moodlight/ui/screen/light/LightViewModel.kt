@@ -1,6 +1,9 @@
 package com.odom.moodlight.ui.screen.light
 
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.odom.moodlight.data.SoundPlayer
@@ -61,7 +64,20 @@ class LightViewModel @Inject constructor(
     private var timerJob: Job? = null
     private var sleepJob: Job? = null
 
+    private var wasInBackground = false
+    private var soundWasActiveBeforeBackground = false
+    private var timerWasPausedByBackground = false
+
+    private val appLifecycleObserver = LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_STOP -> onAppBackground()
+            Lifecycle.Event.ON_START -> if (wasInBackground) onAppForeground()
+            else -> {}
+        }
+    }
+
     init {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(appLifecycleObserver)
         viewModelScope.launch {
             combine(
                 settingsRepository.colorIndex,
@@ -298,8 +314,57 @@ class LightViewModel @Inject constructor(
         _state.update { it.copy(isTimerRunning = false, timerRemainingSeconds = 0) }
     }
 
+    private fun onAppBackground() {
+        wasInBackground = true
+        soundWasActiveBeforeBackground = soundPlayer.hasActiveSounds()
+        timerWasPausedByBackground = _state.value.isTimerRunning
+        timerJob?.cancel()
+        soundPlayer.stopAll()
+    }
+
+    private fun onAppForeground() {
+        wasInBackground = false
+        if (timerWasPausedByBackground) {
+            timerWasPausedByBackground = false
+            val remaining = _state.value.timerRemainingSeconds
+            if (remaining > 0) {
+                timerJob = viewModelScope.launch {
+                    var rem = remaining
+                    while (rem > 0) {
+                        delay(1000)
+                        rem--
+                        _state.update { it.copy(timerRemainingSeconds = rem) }
+                    }
+                    soundPlayer.stopAll()
+                    _state.update { it.copy(isTimerRunning = false) }
+                    _exitApp.tryEmit(Unit)
+                }
+            } else {
+                _state.update { it.copy(isTimerRunning = false) }
+            }
+        }
+        if (soundWasActiveBeforeBackground) {
+            soundWasActiveBeforeBackground = false
+            viewModelScope.launch {
+                val savedMode = settingsRepository.savedSoundMode.first()
+                val savedName = settingsRepository.savedSoundName.first()
+                when (savedMode) {
+                    "LULLABY" -> {
+                        val tracks = soundPlayer.lullabyTracks
+                        if (tracks.isNotEmpty()) soundPlayer.playLullaby(tracks[0], tracks)
+                    }
+                    "WHITE_NOISE" -> {
+                        val sound = SoundType.entries.find { it.name == savedName } ?: SoundType.RAIN
+                        soundPlayer.playWhiteNoise(sound)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
+        ProcessLifecycleOwner.get().lifecycle.removeObserver(appLifecycleObserver)
         soundPlayer.stopAll()
     }
 }

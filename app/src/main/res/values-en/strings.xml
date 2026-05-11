@@ -5,6 +5,8 @@
     <string name="tab_settings">Settings</string>
     <string name="sound_screen_volume_btn">🎚️ Volume</string>
     <string name="sound_screen_volume_settings_title">Volume Settings</string>
+    <string name="sound_tab_lullaby">🎵 Lullaby</string>
+    <string name="sound_tab_white_noise">🌊 White Noise</string>
     <string name="sound_stop">Stop</string>
     <string name="sound_play">Play</string>
     <string name="sound_rain">Rain</string>
