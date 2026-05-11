@@ -43,7 +43,6 @@ import com.odom.moodlight.ui.component.BrightnessSlider
 import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.LightOrb
-import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.component.VisualPatternEffect
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.delay
@@ -293,13 +292,6 @@ fun LightScreen(
         )
     }
 
-    if (state.showPaywall) {
-        RewardedAdSheet(
-            isAdReady = state.isAdReady,
-            onWatchAd = { (context as? Activity)?.let { viewModel.watchAd(it) } },
-            onDismiss = viewModel::dismissPaywall
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

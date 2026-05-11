@@ -41,7 +41,9 @@
       "Bash(git rm *)",
       "Bash(.\\\\gradlew compileDebugKotlin)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 30)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 15)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 15)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 10)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-Object -Last 20)"
     ]
   }
 }

@@ -21,19 +21,11 @@ import com.odom.moodlight.ui.theme.AppColors
 fun SoundChip(
     sound: SoundType,
     isActive: Boolean,
-    isPro: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isLocked = sound.isPro && !isPro
-    val bgColor = when {
-        isActive -> AppColors.TextPrimary.copy(alpha = 0.2f)
-        else -> Color.Transparent
-    }
-    val borderColor = when {
-        isActive -> AppColors.TextPrimary.copy(alpha = 0.6f)
-        else -> AppColors.Border
-    }
+    val bgColor = if (isActive) AppColors.TextPrimary.copy(alpha = 0.2f) else Color.Transparent
+    val borderColor = if (isActive) AppColors.TextPrimary.copy(alpha = 0.6f) else AppColors.Border
 
     Column(
         modifier = modifier
@@ -44,10 +36,7 @@ fun SoundChip(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = if (isLocked) "🔒" else sound.emoji,
-            fontSize = 20.sp
-        )
+        Text(text = sound.emoji, fontSize = 20.sp)
         Text(
             text = stringResource(sound.labelResId),
             fontSize = 11.sp,

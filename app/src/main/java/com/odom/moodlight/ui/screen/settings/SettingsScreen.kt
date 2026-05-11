@@ -50,7 +50,6 @@ import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
-import com.odom.moodlight.ui.component.RewardedAdSheet
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -155,23 +154,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.settings_title), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
         Spacer(Modifier.height(16.dp))
-
-        if (!state.isPro) {
-            Card(
-                modifier = Modifier.fillMaxWidth().clickable { viewModel.showPaywall() },
-                colors = CardDefaults.cardColors(containerColor = AppColors.WarmYellow.copy(alpha = 0.2f))
-            ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("✨", fontSize = 28.sp)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(stringResource(R.string.settings_pro_upgrade), fontWeight = FontWeight.Bold, color = AppColors.TextPrimary)
-                        Text(stringResource(R.string.settings_pro_desc), fontSize = 13.sp, color = AppColors.TextDim)
-                    }
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
 
         // 시각적 패턴 섹션
         SettingSection(title = stringResource(R.string.settings_visual_pattern_section)) {
@@ -330,14 +312,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         Spacer(Modifier.height(16.dp))
         AdBannerView(modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(80.dp))
-    }
-
-    if (state.showPaywall) {
-        RewardedAdSheet(
-            isAdReady = state.isAdReady,
-            onWatchAd = { activity?.let { viewModel.watchAd(it) } },
-            onDismiss = viewModel::dismissPaywall
-        )
     }
 
     if (showColorPalette) {

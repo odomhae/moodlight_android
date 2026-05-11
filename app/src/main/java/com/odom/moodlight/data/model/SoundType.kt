@@ -6,12 +6,11 @@ import com.odom.moodlight.R
 enum class SoundType(
     val emoji: String,
     @StringRes val labelResId: Int,
-    val isPro: Boolean,
-    val fileName: String   // assets/whiteSound/ 안의 실제 파일명 (확장자 포함)
+    val fileName: String
 ) {
-    RAIN("🌧️", R.string.sound_rain, false, "rain.mp3"),
-    WAVE("🌊", R.string.sound_wave, false, "wave.mp3"),
-    FOREST("🌲", R.string.sound_forest, false, "forest.mp3"),
-    FIRE("🔥", R.string.sound_fire, false, "fire.mp3"),
-    WIND("🌬️", R.string.sound_wind, false, "wind.mp3"),
+    RAIN("🌧️", R.string.sound_rain, "rain.mp3"),
+    WAVE("🌊", R.string.sound_wave, "wave.mp3"),
+    FOREST("🌲", R.string.sound_forest, "forest.mp3"),
+    FIRE("🔥", R.string.sound_fire, "fire.mp3"),
+    WIND("🌬️", R.string.sound_wind, "wind.mp3"),
 }

@@ -1,15 +1,12 @@
 package com.odom.moodlight.ui.screen.light
 
-import android.app.Activity
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.data.SoundPlayer
 import com.odom.moodlight.data.model.SoundType
 import com.odom.moodlight.data.model.VisualPattern
 import kotlinx.coroutines.flow.combine
-import com.odom.moodlight.data.repository.BillingRepository
 import com.odom.moodlight.data.repository.SettingsRepository
 import com.odom.moodlight.ui.component.addToRecentColors
 import com.odom.moodlight.ui.component.argbLongToColor
@@ -41,9 +38,6 @@ data class LightUiState(
     val timerMinutes: Int = 0,
     val timerRemainingSeconds: Int = 0,
     val isTimerRunning: Boolean = false,
-    val isPro: Boolean = false,
-    val showPaywall: Boolean = false,
-    val isAdReady: Boolean = false,
     val soundButtonEmoji: String = "🔇",
     val isSoundActive: Boolean = false,
 )
@@ -51,9 +45,7 @@ data class LightUiState(
 @HiltViewModel
 class LightViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val billingRepository: BillingRepository,
     private val soundPlayer: SoundPlayer,
-    private val rewardedAdManager: RewardedAdManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LightUiState())
@@ -74,14 +66,12 @@ class LightViewModel @Inject constructor(
             combine(
                 settingsRepository.colorIndex,
                 settingsRepository.brightness,
-                billingRepository.isPro,
                 settingsRepository.selectedColorArgb,
                 settingsRepository.recentColors
-            ) { colorIdx, brightness, isPro, selectedArgb, recentRaw ->
+            ) { colorIdx, brightness, selectedArgb, recentRaw ->
                 object {
                     val colorIdx = colorIdx
                     val brightness = brightness
-                    val isPro = isPro
                     val selectedArgb = selectedArgb
                     val recentRaw = recentRaw
                 }
@@ -95,7 +85,6 @@ class LightViewModel @Inject constructor(
                         colorIndex = d.colorIdx,
                         lightColor = lightColor,
                         brightness = d.brightness,
-                        isPro = d.isPro,
                         isCustomColorSelected = isCustom,
                         selectedCustomColor = if (isCustom) lightColor else null,
                         recentCustomColors = parseRecentColors(d.recentRaw)
@@ -121,19 +110,7 @@ class LightViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val savedMinutes = settingsRepository.lastTimerMinutes.first()
-            val savedMode = settingsRepository.savedSoundMode.first()
-            val savedName = settingsRepository.savedSoundName.first()
             if (savedMinutes > 0) startTimer(savedMinutes)
-            when (savedMode) {
-                "LULLABY" -> {
-                    val tracks = soundPlayer.lullabyTracks
-                    if (tracks.isNotEmpty()) soundPlayer.playLullaby(tracks[0], tracks)
-                }
-                "WHITE_NOISE" -> {
-                    val sound = SoundType.entries.find { it.name == savedName } ?: SoundType.RAIN
-                    soundPlayer.playWhiteNoise(sound)
-                }
-            }
         }
         viewModelScope.launch {
             combine(
@@ -153,11 +130,6 @@ class LightViewModel @Inject constructor(
                 emoji to isActive
             }.collect { (emoji, isActive) ->
                 _state.update { it.copy(soundButtonEmoji = emoji, isSoundActive = isActive) }
-            }
-        }
-        viewModelScope.launch {
-            rewardedAdManager.isAdReady.collect { isReady ->
-                _state.update { it.copy(isAdReady = isReady) }
             }
         }
     }
@@ -293,6 +265,20 @@ class LightViewModel @Inject constructor(
         timerJob?.cancel()
         _state.update { it.copy(timerMinutes = minutes, timerRemainingSeconds = minutes * 60, isTimerRunning = true) }
         viewModelScope.launch { settingsRepository.setLastTimerMinutes(minutes) }
+        viewModelScope.launch {
+            val savedMode = settingsRepository.savedSoundMode.first()
+            val savedName = settingsRepository.savedSoundName.first()
+            when (savedMode) {
+                "LULLABY" -> {
+                    val tracks = soundPlayer.lullabyTracks
+                    if (tracks.isNotEmpty()) soundPlayer.playLullaby(tracks[0], tracks)
+                }
+                "WHITE_NOISE" -> {
+                    val sound = SoundType.entries.find { it.name == savedName } ?: SoundType.RAIN
+                    soundPlayer.playWhiteNoise(sound)
+                }
+            }
+        }
         timerJob = viewModelScope.launch {
             var remaining = minutes * 60
             while (remaining > 0) {
@@ -310,15 +296,6 @@ class LightViewModel @Inject constructor(
         timerJob?.cancel()
         soundPlayer.stopAll()
         _state.update { it.copy(isTimerRunning = false, timerRemainingSeconds = 0) }
-    }
-
-    fun dismissPaywall() = _state.update { it.copy(showPaywall = false) }
-
-    fun watchAd(activity: Activity) {
-        rewardedAdManager.show(activity) {
-            billingRepository.setProStatus(true)
-            _state.update { it.copy(showPaywall = false) }
-        }
     }
 
     override fun onCleared() {

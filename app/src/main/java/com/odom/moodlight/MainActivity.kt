@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.odom.moodlight.data.RewardedAdManager
 import com.odom.moodlight.ui.navigation.AppNavigation
 import com.odom.moodlight.ui.theme.MoodLightTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -14,9 +13,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var rewardedAdManager: RewardedAdManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
