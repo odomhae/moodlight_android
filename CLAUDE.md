@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UI**: Jetpack Compose + Material3
 - **DI**: Hilt
 - **Persistence**: DataStore Preferences
-- **Monetization**: Google Play Billing (one-time + subscription) + AdMob ads
+- **Monetization**: AdMob ads (billing/IAP removed)
 
 ---
 
@@ -50,7 +50,6 @@ Key dependency versions (from `gradle/libs.versions.toml`):
 | Compose BOM | 2024.09.00 |
 | Hilt | 2.51.1 |
 | DataStore | 1.1.1 |
-| Play Billing | 7.0.0 |
 | Play Ads | 23.6.0 |
 
 ---
@@ -64,7 +63,6 @@ app/src/main/java/com/odom/moodlight/
 ├── MoodLightDeviceAdminReceiver.kt     # Device admin for screen lock on timer end
 ├── data/
 │   ├── SoundPlayer.kt                  # Singleton MediaPlayer manager (separate players for lullaby vs white noise)
-│   ├── RewardedAdManager.kt            # Rewarded ad flow → grants PRO via SharedPreferences
 │   ├── datastore/
 │   │   └── AppPreferences.kt           # DataStore keys and read/write helpers
 │   ├── model/
@@ -72,22 +70,16 @@ app/src/main/java/com/odom/moodlight/
 │   │   ├── SoundType.kt                # Enum: white noise assets (RAIN, WAVE, FOREST, FIRE, WIND)
 │   │   └── VisualPattern.kt            # Enum: NONE, STARLIGHT, CANDLE_FLICKER, WAVE, SNOWFALL
 │   └── repository/
-│       ├── BillingRepository.kt        # Google Play Billing (IAP)
 │       └── SettingsRepository.kt       # Thin wrapper over AppPreferences
-├── di/
-│   ├── AppModule.kt
-│   └── BillingModule.kt
 ├── service/
 │   └── AudioService.kt                 # Foreground service for background audio
 └── ui/
     ├── component/
-    │   ├── AdBannerView.kt             # AdMob banner ad composable
+    │   ├── AdBannerView.kt             # AdMob banner/interstitial/rewarded unit IDs + banner composable
     │   ├── BrightnessSlider.kt
     │   ├── ColorPaletteSheet.kt        # HSL color picker (hue/saturation/lightness sliders + GradientSlider)
     │   ├── ColorPickerRow.kt           # Preset chips + rainbow + add button + recent custom colors row
     │   ├── LightOrb.kt                 # Animated glowing orb (hidden for NONE/WAVE patterns)
-    │   ├── PaywallBottomSheet.kt       # PRO upgrade bottom sheet
-    │   ├── ProBadgeOverlay.kt
     │   ├── SoundCard.kt
     │   ├── SoundChip.kt
     │   ├── TimerArcProgress.kt
@@ -105,7 +97,7 @@ app/src/main/java/com/odom/moodlight/
     │   │   └── SettingsViewModel.kt
     │   ├── sound/
     │   │   ├── SoundScreen.kt
-    │   │   └── SoundViewModel.kt
+    │   │   └── SoundViewModel.kt       # Also defines SoundTab enum
     │   └── timer/
     │       ├── TimerScreen.kt          # Standalone timer screen (not in bottom nav)
     │       └── TimerViewModel.kt       # Self-contained countdown; end actions: CLOSE_APP, DIM_AND_CLOSE, PLAY_ALARM
@@ -114,6 +106,8 @@ app/src/main/java/com/odom/moodlight/
         ├── Theme.kt                    # MoodLightTheme (always dark)
         └── Type.kt
 ```
+
+> **Removed files** (deleted as of recent commits): `data/RewardedAdManager.kt`, `data/repository/BillingRepository.kt`, `di/BillingModule.kt`, `ui/component/PaywallBottomSheet.kt`, `ui/component/ProBadgeOverlay.kt`. The HARD PRO paywall and Google Play Billing have been stripped out.
 
 ---
 
@@ -165,7 +159,7 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 - Full-screen colored ambient light with animated `LightOrb` at center
 - Screen is always kept on (`FLAG_KEEP_SCREEN_ON`) while the Light tab is active
 - Brightness controlled via `WindowManager.LayoutParams.screenBrightness` reflected in state
-- Sleep mode: screen fades to 10% brightness over 5 minutes; long-press to exit
+- Sleep mode: screen fades to 5% brightness after 5 minutes; long-press to exit
 
 ### Opening the control bottom sheet
 - **Swipe up** anywhere in the bottom 65% of the screen (≥ 80px upward drag)
@@ -175,11 +169,23 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 ### Timer
 - Presets: 1, 15, 30, 60, 120, 180, 240, 300, 360 minutes (`TimerBottomSheet`)
 - Timer tap button shown at top when no timer is running
+- **Auto-restores on startup**: last timer minutes saved via `KEY_LAST_TIMER_MINUTES`; if > 0 on init, `startTimer()` is called immediately
+- `startTimer()` also auto-plays the saved sound (`savedSoundMode` / `savedSoundName`)
 - On timer end:
   1. `soundPlayer.stopAll()`
   2. If device admin is active → `DevicePolicyManager.lockNow()` then `finishAndRemoveTask()`
   3. Otherwise → dim screen to `screenBrightness = 0f`, wait 600 ms, then `finishAndRemoveTask()`
 - `LightViewModel.exitApp: SharedFlow<Unit>` drives the exit sequence in `LightScreen`
+
+### Background / foreground lifecycle
+- `LightViewModel` observes `ProcessLifecycleOwner` to detect app backgrounding
+- `ON_STOP`: pauses the timer job and stops all sounds; saves whether sound was active and timer was running
+- `ON_START` (if `wasInBackground`): resumes the timer countdown from where it left off, restores sounds from saved state
+
+### Sound button on Light tab
+- A `cycleSoundMode()` function cycles: off → white noise (last saved or RAIN) → lullaby (first track) → off
+- `LightUiState.soundButtonEmoji: String` and `isSoundActive: Boolean` drive the button display
+- 🎵 for lullaby, `SoundType.emoji` for white noise, 🔇 when off
 
 ### Visual patterns
 Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
@@ -201,6 +207,7 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 - Three `GradientSlider` composables (private) drive hue (0–360°), saturation (0–1), lightness (0–1).
 - `GradientSlider` uses `awaitEachGesture → awaitPointerEvent → drag` for real-time color preview.
 - Selected colors are saved as recent custom colors (max 5) in `LightViewModel`; deduplication threshold is ARGB difference > 100,000.
+- Full ARGB persisted as `KEY_SELECTED_COLOR_ARGB` (Long); recent colors list as `KEY_RECENT_COLORS` (encoded String).
 
 ### Text contrast
 - All overlay text uses perceived luminance: `R×0.299 + G×0.587 + B×0.114`.
@@ -214,11 +221,6 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 - EXIF rotation is corrected on save (`rotateBitmap()` in `SettingsScreen.kt`)
 - `nextEmoji()` in `LightViewModel` cycles through presets and clears custom image
 
-### Sound status display
-- `savedSoundEmoji: String?` in `LightUiState` shows the last-selected sound emoji next to the timer area
-- 🎵 for any lullaby track, or the SoundType's own emoji for white noise
-- Persisted across restarts via `KEY_SAVED_SOUND_MODE` / `KEY_SAVED_SOUND_NAME` DataStore keys
-
 ---
 
 ## Settings Tab (`SettingsScreen` / `SettingsViewModel`)
@@ -227,11 +229,15 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `color_index` | Int | 0 | Selected color index into `cycleColors` |
+| `color_index` | Int | 0 | Selected preset color index into `cycleColors` |
+| `selected_color_argb` | Long | 0xFFFFD6A0 | Full ARGB of active color (preset or custom) |
+| `recent_colors` | String | "" | Encoded list of up to 5 recent custom colors |
 | `brightness` | Float | 0.8 | Screen brightness (0–1) |
+| `visual_pattern` | String | "none" | Active `VisualPattern.id` |
 | `emoji_index` | Int | 0 | Active emoji preset index |
 | `custom_icon_path` | String | "" | Absolute path to custom icon JPEG |
 | `icon_change_count` | Int | 0 | Cumulative icon change count (persisted across restarts) |
+| `last_timer_minutes` | Int | 0 | Last-set timer minutes; auto-restores timer on startup if > 0 |
 | `auto_restore` | Boolean | true | Always true — not shown in UI |
 | `orientation` | String | "portrait" | Not shown in UI (reserved) |
 | `language` | String | "ko" | Not shown in UI (reserved) |
@@ -260,13 +266,14 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 
 ## Sound Tab (`SoundScreen` / `SoundViewModel`)
 
-The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WHITE_NOISE`). Sound selection is **mutually exclusive** — playing one stops the other. There are no per-sound volume controls.
+The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WHITE_NOISE`) defined in `SoundViewModel.kt`. Sound selection is **mutually exclusive** — playing one stops the other. There are no per-sound volume controls.
 
 ### Lullaby sub-tab
 - Tracks are **dynamically scanned** from `assets/lullaby/` at `SoundPlayer` init via `context.assets.list("lullaby")`
+- Supported extensions: `.mp3`, `.m4a` (sorted alphabetically)
 - `LullabyTrack(title, fileName)` — title is the filename minus extension
-- Adding or removing MP3 files from `assets/lullaby/` updates the list with no code changes
-- `SoundPlayer.playLullabyAtIndex(index)` auto-skips missing files and loops the playlist via `setOnCompletionListener`
+- Adding or removing files from `assets/lullaby/` updates the list with no code changes
+- `playLullabyAtIndex()` auto-skips missing files and loops the playlist via `setOnCompletionListener`
 - State tracks `currentTrackIndex: Int?`; toggling the same index stops playback
 
 ### White Noise sub-tab
@@ -285,19 +292,16 @@ The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WH
 ## Monetization
 
 ### AdMob
-- Test App ID: `ca-app-pub-3940256099942544~3347511713`
-- Test Interstitial ID: `ca-app-pub-3940256099942544/1033173712` (`INTERSTITIAL_AD_UNIT_ID` constant in `PaywallBottomSheet.kt`)
-- Banner ad shown inside the back-press exit confirmation sheet
-- Interstitial ad shown on every 3rd icon change
+All ad unit ID constants live in `AdBannerView.kt`:
+- `BANNER_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/6300978111`
+- `INTERSTITIAL_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/1033173712`
+- `REWARDED_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/5224354917`
 
-### Rewarded ads (alternative PRO unlock)
-- `RewardedAdManager` loads and shows a rewarded ad; on reward callback it writes `is_pro = true` to `SharedPreferences`.
-- `PaywallBottomSheet` shows either "Watch ad" or "loading…" depending on ad readiness.
+Ad placements:
+- Banner: inside the back-press exit confirmation sheet
+- Interstitial: every 5 tab switches (tracked in `AppNavigation.kt`) and every 3rd icon change (tracked in `SettingsScreen`)
 
-### Google Play Billing
-- Product IDs: `babylight_pro_lifetime`, `babylight_pro_monthly`
-- `BillingRepository` manages connection, purchase flow, and persists PRO status in `SharedPreferences`
-- `isPro: StateFlow<Boolean>` is observed by `LightViewModel` and `SettingsViewModel`
+> **Google Play Billing and rewarded-ad PRO unlock have been removed.** The `isPro` concept, `BillingRepository`, `RewardedAdManager`, `PaywallBottomSheet`, and `ProBadgeOverlay` no longer exist.
 
 ---
 

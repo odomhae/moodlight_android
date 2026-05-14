@@ -20,7 +20,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -106,6 +108,7 @@ fun LightScreen(
 
     val isNonePattern = state.visualPattern == VisualPattern.NONE
     val isWavePattern = state.visualPattern == VisualPattern.WAVE
+    val isHeartbeatPattern = state.visualPattern == VisualPattern.HEARTBEAT
 
     // NONE·WAVE는 선택 색상이 배경 → 밝기+색 기반 텍스트 대비색 결정
     val useSolidColorBg = isNonePattern || isWavePattern
@@ -148,13 +151,19 @@ fun LightScreen(
             )
         }
 
-        // 조명 Orb — 딤 오버레이 아래에 배치해 밝기 조절에 함께 반응
-        if (!isNonePattern && !isWavePattern) {
+        // 조명 Orb — HEARTBEAT 패턴일 때는 PulsingHeartCenter로 교체
+        if (!isNonePattern && !isWavePattern && !isHeartbeatPattern) {
             LightOrb(
                 color = animatedColor,
                 emoji = state.emoji,
                 customIconPath = state.customIconPath,
                 size = 240.dp,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+        if (isHeartbeatPattern) {
+            PulsingHeartCenter(
+                color = animatedColor,
                 modifier = Modifier.align(Alignment.Center)
             )
         }
@@ -457,12 +466,16 @@ private fun PatternPickerRow(
     selected: VisualPattern,
     onSelect: (VisualPattern) -> Unit
 ) {
-    val items = listOf(
+    val row1 = listOf(
         VisualPattern.NONE to "❌",
         VisualPattern.STARLIGHT to "✨",
         VisualPattern.CANDLE_FLICKER to "🕯️",
         VisualPattern.WAVE to "🌊",
         VisualPattern.SNOWFALL to "❄️",
+    )
+    val row2 = listOf(
+        VisualPattern.HEARTBEAT to "💗",
+        VisualPattern.BUBBLE_FLOAT to "🫧",
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -470,35 +483,75 @@ private fun PatternPickerRow(
             fontSize = 13.sp,
             color = AppColors.TextDim
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items.forEach { (pattern, icon) ->
-                val isSelected = selected == pattern
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isSelected) AppColors.TextPrimary.copy(alpha = 0.12f)
-                            else AppColors.Background.copy(alpha = 0.6f)
-                        )
-                        .border(
-                            width = if (isSelected) 1.5.dp else 1.dp,
-                            color = if (isSelected) AppColors.TextPrimary.copy(alpha = 0.7f)
-                                    else AppColors.Border,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onSelect(pattern) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(icon, fontSize = 22.sp)
+        listOf(row1, row2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowItems.forEach { (pattern, icon) ->
+                    val isSelected = selected == pattern
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) AppColors.TextPrimary.copy(alpha = 0.12f)
+                                else AppColors.Background.copy(alpha = 0.6f)
+                            )
+                            .border(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) AppColors.TextPrimary.copy(alpha = 0.7f)
+                                        else AppColors.Border,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable { onSelect(pattern) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(icon, fontSize = 22.sp)
+                    }
+                }
+                // Fill remaining slots so row2 items match row1 item width
+                repeat(row1.size - rowItems.size) {
+                    Spacer(Modifier.weight(1f))
                 }
             }
         }
     }
+}
+
+@Composable
+private fun PulsingHeartCenter(color: Color, modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "heartPulse")
+
+    val pulseScale by transition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val pulseAlpha by transition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
+    Text(
+        text = "♥",
+        fontSize = 120.sp,
+        color = color,
+        modifier = modifier
+            .scale(pulseScale)
+            .alpha(pulseAlpha)
+    )
 }
 
 @Composable

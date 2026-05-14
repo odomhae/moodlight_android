@@ -5,10 +5,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.odom.moodlight.data.model.VisualPattern
+import kotlinx.coroutines.delay
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -24,6 +27,8 @@ fun VisualPatternEffect(
         VisualPattern.CANDLE_FLICKER -> CandleFlickerEffect(color = color, modifier = modifier)
         VisualPattern.WAVE -> WaveEffect(modifier = modifier)
         VisualPattern.SNOWFALL -> SnowfallEffect(modifier = modifier)
+        VisualPattern.HEARTBEAT -> HeartbeatEffect(color = color, modifier = modifier)
+        VisualPattern.BUBBLE_FLOAT -> BubbleFloatEffect(color = color, modifier = modifier)
     }
 }
 
@@ -195,3 +200,150 @@ private data class Snowflake(
     val speed: Float,
     val drift: Float
 )
+
+@Composable
+private fun HeartbeatEffect(color: Color, modifier: Modifier = Modifier) {
+    val rippleCount = 5
+    val ripples = remember { List(rippleCount) { Animatable(0f) } }
+
+    ripples.forEachIndexed { index, ripple ->
+        LaunchedEffect(index) {
+            delay(index * 1000L)
+            while (true) {
+                ripple.snapTo(0f)
+                ripple.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 4000, easing = LinearEasing)
+                )
+            }
+        }
+    }
+
+    Canvas(modifier = modifier) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        // 하트의 너비 ≈ 4.4r, 높이 ≈ 1.8r 이므로 화면을 채우는 최대 r 계산
+        val maxR = maxOf(size.width / 4.4f, size.height / 1.8f) * 1.15f
+
+        ripples.forEach { ripple ->
+            val progress = ripple.value
+            val r = progress * maxR
+            val alpha = when {
+                progress < 0.15f -> (progress / 0.15f) * 0.5f
+                else -> ((1f - progress) / 0.85f) * 0.5f
+            }.coerceIn(0f, 0.5f)
+            val strokeWidth = (1f - progress) * 3f + 0.5f
+
+            drawPath(
+                path = heartPath(cx, cy, r),
+                color = color.copy(alpha = alpha),
+                style = Stroke(width = strokeWidth)
+            )
+        }
+    }
+}
+
+private fun heartPath(cx: Float, cy: Float, r: Float): Path {
+    val path = Path()
+    // 아래 꼭짓점에서 시작
+    path.moveTo(cx, cy + r)
+    // 왼쪽 곡선: 아래 꼭짓점 → 위 중앙 홈
+    path.cubicTo(
+        cx - r * 2.2f, cy + r * 0.5f,
+        cx - r * 2.2f, cy - r * 0.6f,
+        cx,            cy - r * 0.3f
+    )
+    // 오른쪽 곡선: 위 중앙 홈 → 아래 꼭짓점
+    path.cubicTo(
+        cx + r * 2.2f, cy - r * 0.6f,
+        cx + r * 2.2f, cy + r * 0.5f,
+        cx,            cy + r
+    )
+    path.close()
+    return path
+}
+
+private data class Bubble(
+    val baseX: Float,
+    val baseY: Float,
+    val radius: Float,
+    val speed: Float,
+    val wobbleAmp: Float,
+    val wobbleFreq: Float,
+    val wobblePhase: Float
+)
+
+@Composable
+private fun BubbleFloatEffect(color: Color, modifier: Modifier = Modifier) {
+    val bubbles = remember {
+        List(15) {
+            Bubble(
+                baseX = Random.nextFloat(),
+                baseY = Random.nextFloat(),
+                radius = Random.nextFloat() * 30f + 18f,
+                speed = Random.nextFloat() * 0.008f + 0.004f,
+                wobbleAmp = Random.nextFloat() * 18f + 12f,
+                wobbleFreq = Random.nextFloat() * 0.5f + 0.4f,
+                wobblePhase = Random.nextFloat() * (2 * PI).toFloat()
+            )
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "bubbles")
+    val time by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(tween(40000, easing = LinearEasing)),
+        label = "bubbleTime"
+    )
+
+    Canvas(modifier = modifier) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val exclusionRadius = minOf(size.width, size.height) * 0.30f
+
+        bubbles.forEach { bubble ->
+            val currentY = (1f - ((bubble.baseY + time * bubble.speed) % 1f)) * size.height
+            val wobble = sin(time * bubble.wobbleFreq + bubble.wobblePhase) * bubble.wobbleAmp +
+                cos(time * bubble.wobbleFreq * 0.61f + bubble.wobblePhase * 1.3f) * bubble.wobbleAmp * 0.3f
+            val currentX = bubble.baseX * size.width + wobble
+
+            val dx = currentX - cx
+            val dy = currentY - cy
+            if (dx * dx + dy * dy < exclusionRadius * exclusionRadius) return@forEach
+
+            val r = bubble.radius
+            val center = Offset(currentX, currentY)
+
+            val brush = Brush.radialGradient(
+                colors = listOf(
+                    color.copy(alpha = 0.04f),
+                    color.copy(alpha = 0.08f),
+                    color.copy(alpha = 0.22f),
+                    color.copy(alpha = 0.05f)
+                ),
+                center = center,
+                radius = r
+            )
+            drawCircle(brush = brush, radius = r, center = center)
+
+            drawCircle(
+                color = color.copy(alpha = 0.35f),
+                radius = r,
+                center = center,
+                style = Stroke(width = 1.2f)
+            )
+
+            drawCircle(
+                color = Color.White.copy(alpha = 0.55f),
+                radius = r * 0.22f,
+                center = Offset(currentX - r * 0.28f, currentY - r * 0.32f)
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = 0.25f),
+                radius = r * 0.10f,
+                center = Offset(currentX - r * 0.14f, currentY - r * 0.18f)
+            )
+        }
+    }
+}
