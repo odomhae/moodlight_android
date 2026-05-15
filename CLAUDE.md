@@ -188,7 +188,7 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 - 🎵 for lullaby, `SoundType.emoji` for white noise, 🔇 when off
 
 ### Visual patterns
-Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
+Seven patterns selectable in the control sheet (stored in `VisualPattern` enum):
 
 | Pattern | Effect |
 |---------|--------|
@@ -197,8 +197,10 @@ Five patterns selectable in the control sheet (stored in `VisualPattern` enum):
 | `CANDLE_FLICKER` | Flickering warm flame particles |
 | `WAVE` | 4 layered sine waves (black-on-color shadow, alpha 0.22→0.07) |
 | `SNOWFALL` | Falling snowflake particles |
+| `HEARTBEAT` | `VisualPatternEffect` renders `HeartbeatEffect` overlay; center shows `PulsingHeartCenter` (pulsing ♥ text with scale/alpha animation at 600 ms cadence) instead of `LightOrb` |
+| `BUBBLE_FLOAT` | `BubbleFloatEffect` Canvas overlay |
 
-- `LightOrb` is hidden for `NONE` and `WAVE` patterns.
+- `LightOrb` is hidden for `NONE`, `WAVE`, and `HEARTBEAT` patterns (`HEARTBEAT` shows `PulsingHeartCenter` instead).
 - Patterns render in `VisualPatternEffect.kt` as Canvas composables with a 30%-diameter exclusion zone around center.
 - `WAVE` background equals the selected color (not dark); the black sine waves create a shadow-flow effect.
 
@@ -277,7 +279,7 @@ The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WH
 - State tracks `currentTrackIndex: Int?`; toggling the same index stops playback
 
 ### White Noise sub-tab
-- Five hardcoded `SoundType` enum entries: `RAIN`, `WAVE`, `FOREST`, `FIRE`, `WIND` — all `isPro = false`
+- Five hardcoded `SoundType` enum entries: `RAIN`, `WAVE`, `FOREST`, `FIRE`, `WIND`
 - Audio files live in `assets/whiteSound/{fileName}` (defined per enum entry)
 - **Asset mismatch warning**: `assets/whiteSound/` also contains `birds.mp3`, `Shhh.m4a`, `shoppingmall.m4a`, `vinyl.m4a` which are **not wired** to any `SoundType`; `FOREST` references `forest.mp3` which may not exist — tapping it fails silently. Reconcile when adding new sounds.
 - To add a new white noise sound: add the file to `assets/whiteSound/` **and** add a `SoundType` enum entry with the matching `fileName`
@@ -302,6 +304,11 @@ Ad placements:
 - Interstitial: every 5 tab switches (tracked in `AppNavigation.kt`) and every 3rd icon change (tracked in `SettingsScreen`)
 
 > **Google Play Billing and rewarded-ad PRO unlock have been removed.** The `isPro` concept, `BillingRepository`, `RewardedAdManager`, `PaywallBottomSheet`, and `ProBadgeOverlay` no longer exist.
+
+### In-app Review (Play Core)
+`ReviewManagerFactory.create(activity)` is called in two places:
+- `LightScreen`: fires when the user confirms a timer start (inside `TimerBottomSheet.onStart`)
+- `SettingsScreen`: fires when the user taps the "리뷰 남기기" setting row
 
 ---
 
