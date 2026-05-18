@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,8 +27,8 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.odom.moodlight.R
 import com.odom.moodlight.ui.component.AdBannerView
-import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.screen.light.LightScreen
 import com.odom.moodlight.ui.screen.settings.SettingsScreen
 import com.odom.moodlight.ui.screen.sound.SoundScreen
@@ -55,10 +56,11 @@ fun AppNavigation() {
     val prefs = remember { context.getSharedPreferences("moodlight_nav", Context.MODE_PRIVATE) }
     val tabSwitchCount = remember { intArrayOf(prefs.getInt("tab_switch_count", 0)) }
     val isFirstRouteLoad = remember { booleanArrayOf(true) }
+    val ADMOB_INTERSTITIAL_ID = stringResource(R.string.TEST_ADMOB_INTERSTITIAL_ID)
 
     fun loadNavInterstitial() {
         activity?.let { act ->
-            InterstitialAd.load(act, INTERSTITIAL_AD_UNIT_ID, AdRequest.Builder().build(),
+            InterstitialAd.load(act, ADMOB_INTERSTITIAL_ID, AdRequest.Builder().build(),
                 object : InterstitialAdLoadCallback() {
                     override fun onAdLoaded(ad: InterstitialAd) { navInterstitialAd = ad }
                     override fun onAdFailedToLoad(e: LoadAdError) { navInterstitialAd = null }

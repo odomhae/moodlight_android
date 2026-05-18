@@ -66,6 +66,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val coroutineScope = rememberCoroutineScope()
     var cameraFile by remember { mutableStateOf<File?>(null) }
     var showColorPalette by remember { mutableStateOf(false) }
+    val INTERSTITIAL_AD_UNIT_ID = stringResource(R.string.TEST_ADMOB_INTERSTITIAL_ID)
 
     val dpm = remember { context.getSystemService(DevicePolicyManager::class.java) }
     val adminComponent = remember { ComponentName(context, MoodLightDeviceAdminReceiver::class.java) }

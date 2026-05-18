@@ -71,4 +71,17 @@
     <string name="settings_color_section">색상 커스텀</string>
     <string name="settings_open_color_palette">🎨 색상 팔레트 열기</string>
     <string name="settings_recent_colors">최근 선택한 색상</string>
+
+
+    <!-- AdMob -->
+    <string name="TEST_ADMOB_APP_ID">"ca-app-pub-3940256099942544~3347511713</string>
+    <string name="TEST_ADMOB_BANNER_ID">"ca-app-pub-3940256099942544/6300978111"</string>
+    <string name="TEST_ADMOB_INTERSTITIAL_ID">"ca-app-pub-3940256099942544/1033173712"</string>
+
+
+    <string name="REAL_ADMOB_APP_ID">"ca-app-pub-6729344454320392~8498202032"</string>
+    <string name="REAL_ADMOB_BANNER_ID">"ca-app-pub-6729344454320392/7925459188"</string>
+    <string name="REAL_ADMOB_INTERSTITIAL_ID">"ca-app-pub-6729344454320392/7025338268"</string>
+
+
 </resources>
