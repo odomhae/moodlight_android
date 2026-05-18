@@ -32,7 +32,7 @@ data class LightUiState(
     val recentCustomColors: List<Color> = emptyList(),
     val brightness: Float = 0.8f,
     val isCycleMode: Boolean = false,
-    val visualPattern: VisualPattern = VisualPattern.NONE,
+    val visualPattern: VisualPattern = VisualPattern.CANDLE_FLICKER,
     val activeSound: SoundType? = null,
     val emoji: String = "🌙",
     val customIconPath: String? = null,

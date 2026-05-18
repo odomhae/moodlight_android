@@ -49,6 +49,7 @@ import com.odom.moodlight.R
 import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.component.ColorPaletteSheet
+import com.odom.moodlight.ui.component.ColorPickerRow
 import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
@@ -196,33 +197,20 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
         // 색상 섹션
         SettingSection(title = stringResource(R.string.settings_color_section)) {
-            OutlinedButton(
-                onClick = { showColorPalette = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.settings_open_color_palette), color = AppColors.TextPrimary)
-            }
-            if (state.recentCustomColors.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.settings_recent_colors), fontSize = 12.sp, color = AppColors.TextDim)
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    state.recentCustomColors.forEach { color ->
-                        androidx.compose.foundation.layout.Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .then(
-                                    Modifier.clickable { viewModel.selectCustomColor(color) }
-                                )
-                        ) {
-                            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                                drawCircle(color = color)
-                            }
-                        }
-                    }
-                }
-            }
+            ColorPickerRow(
+                selectedIndex = state.colorIndex,
+                isCycleMode = state.isCycleMode,
+                recentCustomColors = state.recentCustomColors,
+                isCustomColorSelected = state.isCustomColorSelected,
+                selectedCustomColor = state.selectedCustomColor,
+                onColorSelect = viewModel::selectColor,
+                onCycleSelect = viewModel::toggleCycleMode,
+                onCustomColorSelect = { color ->
+                    viewModel.selectCustomColor(color)
+                    showColorPalette = false
+                },
+                onOpenPalette = { showColorPalette = true }
+            )
         }
 
         // 아이콘 섹션

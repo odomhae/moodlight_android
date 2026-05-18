@@ -83,7 +83,10 @@ class AppPreferences @Inject constructor(
 
     val visualPattern: Flow<String> = store.data
         .catch { emit(emptyPreferences()) }
-        .map { it[KEY_VISUAL_PATTERN] ?: "none" }
+        .map { prefs ->
+            val stored = prefs[KEY_VISUAL_PATTERN]
+            if (stored.isNullOrEmpty() || stored == "none") "candle_flicker" else stored
+        }
 
     val selectedColorArgb: Flow<Long> = store.data
         .catch { emit(emptyPreferences()) }
