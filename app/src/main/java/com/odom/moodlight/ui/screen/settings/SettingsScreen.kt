@@ -50,7 +50,6 @@ import com.odom.moodlight.data.model.VisualPattern
 import com.odom.moodlight.ui.component.AdBannerView
 import com.odom.moodlight.ui.component.ColorPaletteSheet
 import com.odom.moodlight.ui.component.ColorPickerRow
-import com.odom.moodlight.ui.component.INTERSTITIAL_AD_UNIT_ID
 import com.odom.moodlight.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

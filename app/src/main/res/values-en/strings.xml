@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Baby Night Light</string>
+    <string name="app_name">MoodLight</string>
     <string name="tab_light">Light</string>
     <string name="tab_sound">Sound</string>
     <string name="tab_settings">Settings</string>
