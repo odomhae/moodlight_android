@@ -49,7 +49,14 @@
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin 2>&1 | Select-String \"error:\" | Select-Object -First 20)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; .\\\\gradlew compileDebugKotlin --info 2>&1 | Select-String \"e:\" | Select-Object -First 20)",
       "PowerShell(Get-Command *)",
-      "PowerShell(cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Java\\\\jdk-17\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-String -Pattern \"error:|warning:|BUILD\" | Select-Object -Last 30)"
+      "PowerShell(cd \"C:\\\\Users\\\\User\\\\Documents\\\\MoodLight_Android\"; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Java\\\\jdk-17\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-String -Pattern \"error:|warning:|BUILD\" | Select-Object -Last 30)",
+      "Bash(Get-ChildItem *)",
+      "Bash(find *)",
+      "Bash(grep -rn --include=\"*.kt\" -E '\"[가-힣A-Za-z][가-힣A-Za-z ·\\\\-!?\\\\.]{2,}\"' app/src/main/java/)",
+      "Bash(grep -v \"//\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(PowerShell -Command ' *)"
     ]
   }
 }

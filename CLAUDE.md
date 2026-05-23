@@ -23,10 +23,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Requires **Java 17**. On Windows use `.\gradlew` (PowerShell) or `gradlew.bat`.
 
 ```bash
-# Debug build
+# Debug build (R8 enabled)
 ./gradlew assembleDebug
 
-# Release build (minification disabled — no ProGuard config)
+# Release build (R8 enabled)
 ./gradlew assembleRelease
 
 # Unit tests
@@ -40,6 +40,8 @@ Requires **Java 17**. On Windows use `.\gradlew` (PowerShell) or `gradlew.bat`.
 ```
 
 > **Note**: The `test/` and `androidTest/` directories currently contain only the auto-generated `ExampleUnitTest` / `ExampleInstrumentedTest` placeholders — there are no real test suites yet.
+
+**R8 / Minification**: Both `debug` and `release` build types have `isMinifyEnabled = true` and `isShrinkResources = true`. The only project-specific ProGuard rule is in `proguard-rules.pro`: keeping `SoundType` enum member names (they are stored as raw strings in DataStore via `SoundType.name`). All other libraries (Hilt, AdMob, DataStore, Coroutines, Compose) supply their own consumer rules via AAR.
 
 Key dependency versions (from `gradle/libs.versions.toml`):
 
@@ -59,7 +61,7 @@ Key dependency versions (from `gradle/libs.versions.toml`):
 ```
 app/src/main/java/com/odom/moodlight/
 ├── MainActivity.kt                     # Single activity entry point
-├── MoodLightApplication.kt             # Hilt application class
+├── MoodLightApplication.kt             # Hilt application class + notification channel setup
 ├── MoodLightDeviceAdminReceiver.kt     # Device admin for screen lock on timer end
 ├── data/
 │   ├── SoundPlayer.kt                  # Singleton MediaPlayer manager (separate players for lullaby vs white noise)
@@ -67,23 +69,23 @@ app/src/main/java/com/odom/moodlight/
 │   │   └── AppPreferences.kt           # DataStore keys and read/write helpers
 │   ├── model/
 │   │   ├── LullabyTrack.kt             # Data class: title + fileName, dynamically scanned from assets/lullaby/
-│   │   ├── SoundType.kt                # Enum: white noise assets (RAIN, WAVE, FOREST, FIRE, WIND)
-│   │   └── VisualPattern.kt            # Enum: NONE, STARLIGHT, CANDLE_FLICKER, WAVE, SNOWFALL
+│   │   ├── SoundType.kt                # Enum: white noise assets (RAIN, WAVE, FOREST, SHHH)
+│   │   └── VisualPattern.kt            # Enum: NONE, STARLIGHT, CANDLE_FLICKER, WAVE, SNOWFALL, HEARTBEAT, BUBBLE_FLOAT
 │   └── repository/
 │       └── SettingsRepository.kt       # Thin wrapper over AppPreferences
 ├── service/
 │   └── AudioService.kt                 # Foreground service for background audio
 └── ui/
     ├── component/
-    │   ├── AdBannerView.kt             # AdMob banner/interstitial/rewarded unit IDs + banner composable
+    │   ├── AdBannerView.kt             # AdMob banner composable
     │   ├── BrightnessSlider.kt
     │   ├── ColorPaletteSheet.kt        # HSL color picker (hue/saturation/lightness sliders + GradientSlider)
     │   ├── ColorPickerRow.kt           # Preset chips + rainbow + add button + recent custom colors row
-    │   ├── LightOrb.kt                 # Animated glowing orb (hidden for NONE/WAVE patterns)
+    │   ├── LightOrb.kt                 # Animated glowing orb (hidden for NONE/WAVE/HEARTBEAT patterns)
     │   ├── SoundCard.kt
     │   ├── SoundChip.kt
     │   ├── TimerArcProgress.kt
-    │   ├── VisualPatternEffect.kt      # Canvas-based pattern renderers (Starfield, Candle, Wave, Snow)
+    │   ├── VisualPatternEffect.kt      # Canvas-based pattern renderers
     │   ├── WaveformAnimation.kt
     │   └── WheelPicker.kt
     ├── navigation/
@@ -107,7 +109,7 @@ app/src/main/java/com/odom/moodlight/
         └── Type.kt
 ```
 
-> **Removed files** (deleted as of recent commits): `data/RewardedAdManager.kt`, `data/repository/BillingRepository.kt`, `di/BillingModule.kt`, `ui/component/PaywallBottomSheet.kt`, `ui/component/ProBadgeOverlay.kt`. The HARD PRO paywall and Google Play Billing have been stripped out.
+> **Removed files** (deleted): `data/RewardedAdManager.kt`, `data/repository/BillingRepository.kt`, `di/BillingModule.kt`, `ui/component/PaywallBottomSheet.kt`, `ui/component/ProBadgeOverlay.kt`. The PRO paywall and Google Play Billing have been fully stripped out.
 
 ---
 
@@ -121,10 +123,22 @@ Three tabs defined in `AppNavigation.kt`:
 | 🎵 사운드 | `sound` | `SoundScreen` |
 | ⚙️ 설정 | `settings` | `SettingsScreen` |
 
+- `Screen` sealed class uses `@StringRes labelRes: Int` (not a hardcoded string) for tab labels.
 - Back button triggers an exit confirmation `ModalBottomSheet` with an AdMob banner ad inside.
 - Default start destination: `light`.
 - An interstitial ad fires every 5 tab switches (tracked in `SharedPreferences` inside `AppNavigation.kt`).
-- `ui/screen/timer/` exists but is **not wired into the bottom nav** — it is a standalone timer screen for future integration.
+- `ui/screen/timer/` exists but is **not wired into the bottom nav** — standalone timer screen for future integration.
+
+---
+
+## String Resources & Localization
+
+All user-visible strings must be in `res/values/strings.xml` (Korean) and `res/values-en/strings.xml` (English).
+
+- **In Composables**: use `stringResource(R.string.key)`
+- **In non-Composable contexts** (Application, Service): use `context.getString(R.string.key)`
+
+Do **not** use `R.string.key.toString()` — that converts the integer resource ID to a string, not the string value.
 
 ---
 
@@ -149,7 +163,7 @@ AppColors.Lavender    = 0xFFD4B8FF
 AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavender)
 ```
 
-**Status bar**: Always uses light (white) icons via `SystemBarStyle.dark(Color.TRANSPARENT)` in `MainActivity.enableEdgeToEdge()`. Do not change this — the app background is always dark.
+**Status bar**: Always uses light (white) icons via `SystemBarStyle.dark(Color.TRANSPARENT)` in `MainActivity.enableEdgeToEdge()`. Do not change this.
 
 ---
 
@@ -163,7 +177,7 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 
 ### Opening the control bottom sheet
 - **Swipe up** anywhere in the bottom 65% of the screen (≥ 80px upward drag)
-- Visual hint at bottom: bouncing `KeyboardArrowUp` icon + "밀어서 색상·밝기 조절" text
+- Visual hint at bottom: bouncing `KeyboardArrowUp` icon + hint text
 - `ControlBottomSheet`: color picker + brightness slider (`skipPartiallyExpanded = true`)
 
 ### Timer
@@ -183,45 +197,44 @@ AppColors.cycleColors = listOf(WarmYellow, SkyBlue, MintGreen, SoftPink, Lavende
 - `ON_START` (if `wasInBackground`): resumes the timer countdown from where it left off, restores sounds from saved state
 
 ### Sound button on Light tab
-- A `cycleSoundMode()` function cycles: off → white noise (last saved or RAIN) → lullaby (first track) → off
-- `LightUiState.soundButtonEmoji: String` and `isSoundActive: Boolean` drive the button display
+- `cycleSoundMode()` cycles: **off → white noise → lullaby → off**
+- White noise restored to last-selected type (reads `savedSoundName`; falls back to `RAIN` if empty)
+- `savedSoundName` is **always preserved** across all state transitions — it is never reset to `""` when stopping. This ensures the white noise selection survives tab switching, lullaby play, and app restart.
 - 🎵 for lullaby, `SoundType.emoji` for white noise, 🔇 when off
 
 ### Visual patterns
-Seven patterns selectable in the control sheet (stored in `VisualPattern` enum):
 
 | Pattern | Effect |
 |---------|--------|
 | `NONE` | Solid background, no overlay |
 | `STARLIGHT` | Canvas particle field with twinkling stars |
 | `CANDLE_FLICKER` | Flickering warm flame particles |
-| `WAVE` | 4 layered sine waves (black-on-color shadow, alpha 0.22→0.07) |
+| `WAVE` | 4 layered sine waves (black-on-color shadow) |
 | `SNOWFALL` | Falling snowflake particles |
-| `HEARTBEAT` | `VisualPatternEffect` renders `HeartbeatEffect` overlay; center shows `PulsingHeartCenter` (pulsing ♥ text with scale/alpha animation at 600 ms cadence) instead of `LightOrb` |
-| `BUBBLE_FLOAT` | `BubbleFloatEffect` Canvas overlay |
+| `HEARTBEAT` | Pulsing ♥ at center (replaces `LightOrb`); 600 ms cadence |
+| `BUBBLE_FLOAT` | Floating bubble Canvas overlay |
 
-- `LightOrb` is hidden for `NONE`, `WAVE`, and `HEARTBEAT` patterns (`HEARTBEAT` shows `PulsingHeartCenter` instead).
-- Patterns render in `VisualPatternEffect.kt` as Canvas composables with a 30%-diameter exclusion zone around center.
-- `WAVE` background equals the selected color (not dark); the black sine waves create a shadow-flow effect.
+- `LightOrb` is hidden for `NONE`, `WAVE`, and `HEARTBEAT` patterns.
+- Patterns render in `VisualPatternEffect.kt` with a 30%-diameter exclusion zone around center.
+- `WAVE` background equals the selected color; black sine waves create a shadow-flow effect.
+- **Default pattern** (when stored value is `"none"` or empty): `STARLIGHT` — see `AppPreferences.visualPattern`.
 
 ### HSL color picker
-- `ColorPaletteSheet.kt` contains an HSL picker launched from the `+` button in `ColorPickerRow`.
-- Three `GradientSlider` composables (private) drive hue (0–360°), saturation (0–1), lightness (0–1).
-- `GradientSlider` uses `awaitEachGesture → awaitPointerEvent → drag` for real-time color preview.
-- Selected colors are saved as recent custom colors (max 5) in `LightViewModel`; deduplication threshold is ARGB difference > 100,000.
-- Full ARGB persisted as `KEY_SELECTED_COLOR_ARGB` (Long); recent colors list as `KEY_RECENT_COLORS` (encoded String).
+- `ColorPaletteSheet.kt` — launched from the `+` button in `ColorPickerRow`
+- Three `GradientSlider` composables drive hue (0–360°), saturation (0–1), lightness (0–1)
+- `GradientSlider` uses `awaitEachGesture → awaitPointerEvent → drag` for real-time preview
+- Recent custom colors: max 5, deduplication threshold is ARGB difference > 100,000
+- Full ARGB persisted as `KEY_SELECTED_COLOR_ARGB` (Long); recent colors list as `KEY_RECENT_COLORS` (encoded String)
 
 ### Text contrast
-- All overlay text uses perceived luminance: `R×0.299 + G×0.587 + B×0.114`.
-- Formula is applied as `effectiveLuminance = perceivedLuminance × animatedBrightness`.
-- Threshold 0.45: above → black text, below → white text.
-- Brightness dimming is implemented as a black overlay (`Color.Black.copy(alpha = 1 - brightness)`) between the Orb layer and the text layer — the root Box does **not** use `.alpha()`, keeping text always 100% opaque.
+- Perceived luminance: `R×0.299 + G×0.587 + B×0.114` × `animatedBrightness`
+- Threshold 0.45: above → black text, below → white text
+- Brightness dimming is a black overlay between the Orb layer and the text layer — the root Box does **not** use `.alpha()`, keeping text always 100% opaque
 
 ### Center icon / emoji
 - 5 emoji presets: 🌙 👶 🌟 🐑 🦋 (index stored in DataStore)
 - Custom image from camera or gallery (stored as `custom_icon.jpg` in `filesDir`)
-- EXIF rotation is corrected on save (`rotateBitmap()` in `SettingsScreen.kt`)
-- `nextEmoji()` in `LightViewModel` cycles through presets and clears custom image
+- EXIF rotation corrected on save (`rotateBitmap()` in `SettingsScreen.kt`)
 
 ---
 
@@ -235,86 +248,70 @@ Seven patterns selectable in the control sheet (stored in `VisualPattern` enum):
 | `selected_color_argb` | Long | 0xFFFFD6A0 | Full ARGB of active color (preset or custom) |
 | `recent_colors` | String | "" | Encoded list of up to 5 recent custom colors |
 | `brightness` | Float | 0.8 | Screen brightness (0–1) |
-| `visual_pattern` | String | "none" | Active `VisualPattern.id` |
+| `visual_pattern` | String | → "starlight" | Active `VisualPattern.id`; "none"/empty maps to "starlight" |
 | `emoji_index` | Int | 0 | Active emoji preset index |
 | `custom_icon_path` | String | "" | Absolute path to custom icon JPEG |
-| `icon_change_count` | Int | 0 | Cumulative icon change count (persisted across restarts) |
+| `icon_change_count` | Int | 0 | Cumulative icon change count for interstitial trigger |
 | `last_timer_minutes` | Int | 0 | Last-set timer minutes; auto-restores timer on startup if > 0 |
-| `auto_restore` | Boolean | true | Always true — not shown in UI |
-| `orientation` | String | "portrait" | Not shown in UI (reserved) |
-| `language` | String | "ko" | Not shown in UI (reserved) |
-| `saved_sound_mode` | String | "NONE" | Last active sound tab: "NONE" \| "LULLABY" \| "WHITE_NOISE" |
-| `saved_sound_name` | String | "" | For WHITE_NOISE: `SoundType.name` of the last played sound |
+| `saved_sound_mode` | String | "NONE" | "NONE" \| "LULLABY" \| "WHITE_NOISE" |
+| `saved_sound_name` | String | "" | `SoundType.name` of last white noise; **never reset to ""** |
 
 ### Interstitial ad trigger
 - Every **3rd icon change** (emoji preset or custom image) triggers an interstitial ad
-- Count is persisted in DataStore (`icon_change_count`) so it survives app restarts
 - `SettingsRepository.incrementAndGetIconChangeCount()` atomically reads, increments, saves
 
 ### Timer screen-off permission
-- "타이머 종료 시 화면 끄기" toggle — uses `DevicePolicyManager` device admin
-- Receiver: `MoodLightDeviceAdminReceiver` (declared in `AndroidManifest.xml`)
-- Policy file: `res/xml/device_admin.xml` (uses `force-lock` policy)
+- Uses `DevicePolicyManager` device admin; receiver: `MoodLightDeviceAdminReceiver`
+- Policy file: `res/xml/device_admin.xml` (`force-lock` policy only)
 - Admin status refreshed on `ON_RESUME` via `LifecycleEventObserver`
-- Enabling: launches `DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN` intent
-- Disabling: calls `dpm.removeActiveAdmin(adminComponent)`
-
-### Removed settings (intentionally)
-- Screen orientation selector (hardcoded to portrait in manifest)
-- Language selector
-- Auto-restore toggle (always on)
+- Always check `dpm.isAdminActive(adminComponent)` before calling `lockNow()`
 
 ---
 
 ## Sound Tab (`SoundScreen` / `SoundViewModel`)
 
-The Sound tab has **two sub-tabs** driven by the `SoundTab` enum (`LULLABY`, `WHITE_NOISE`) defined in `SoundViewModel.kt`. Sound selection is **mutually exclusive** — playing one stops the other. There are no per-sound volume controls.
+Two sub-tabs: `SoundTab.LULLABY` and `SoundTab.WHITE_NOISE`. Sound selection is **mutually exclusive**.
 
 ### Lullaby sub-tab
-- Tracks are **dynamically scanned** from `assets/lullaby/` at `SoundPlayer` init via `context.assets.list("lullaby")`
-- Supported extensions: `.mp3`, `.m4a` (sorted alphabetically)
-- `LullabyTrack(title, fileName)` — title is the filename minus extension
-- Adding or removing files from `assets/lullaby/` updates the list with no code changes
-- `playLullabyAtIndex()` auto-skips missing files and loops the playlist via `setOnCompletionListener`
-- State tracks `currentTrackIndex: Int?`; toggling the same index stops playback
+- Tracks dynamically scanned from `assets/lullaby/` (`.mp3`, `.m4a`, sorted alphabetically)
+- `playLullabyAtIndex()`: on completion plays `(index + 1) % size` → full **playlist loop**
+- Auto-skips missing files
 
 ### White Noise sub-tab
-- Five hardcoded `SoundType` enum entries: `RAIN`, `WAVE`, `FOREST`, `FIRE`, `WIND`
-- Audio files live in `assets/whiteSound/{fileName}` (defined per enum entry)
-- **Asset mismatch warning**: `assets/whiteSound/` also contains `birds.mp3`, `Shhh.m4a`, `shoppingmall.m4a`, `vinyl.m4a` which are **not wired** to any `SoundType`; `FOREST` references `forest.mp3` which may not exist — tapping it fails silently. Reconcile when adding new sounds.
-- To add a new white noise sound: add the file to `assets/whiteSound/` **and** add a `SoundType` enum entry with the matching `fileName`
+- `SoundType` enum: `RAIN`, `WAVE`, `FOREST`, `SHHH` (4 entries; files in `assets/whiteSound/`)
+- `playWhiteNoise()`: `isLooping = true` → **single track loop**
+- **Asset note**: `assets/whiteSound/` may contain extra files not wired to any `SoundType`. To add a new sound: add the file **and** a matching `SoundType` enum entry.
+- `SoundType` enum member names are stored as strings in DataStore — **do not rename enum constants** without updating existing saved data. The ProGuard rule `-keepnames class SoundType` preserves this.
 
 ### AudioService
-- Foreground service (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`) started via `Intent(ACTION_START)` / stopped via `Intent(ACTION_STOP)`
-- Inner `AudioBinder` exposes `getPlayer(): SoundPlayer` to bound clients
-- Notification text: "아기 야간등" / "사운드 재생 중"
+- Foreground service (`FOREGROUND_SERVICE_MEDIA_PLAYBACK`), started/stopped via `Intent(ACTION_START/STOP)`
+- Notification title/content use `getString(R.string.notification_title/content)`
 
 ---
 
 ## Monetization
 
 ### AdMob
-All ad unit ID constants live in `AdBannerView.kt`:
-- `BANNER_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/6300978111`
-- `INTERSTITIAL_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/1033173712`
-- `REWARDED_AD_UNIT_ID` — test: `ca-app-pub-3940256099942544/5224354917`
+Ad unit IDs live in `res/values/strings.xml` (both TEST and REAL IDs):
+- `R.string.REAL_ADMOB_BANNER_ID` / `R.string.TEST_ADMOB_BANNER_ID`
+- `R.string.REAL_ADMOB_INTERSTITIAL_ID` / `R.string.TEST_ADMOB_INTERSTITIAL_ID`
+
+`AdBannerView` loads the banner with `context.getString(R.string.REAL_ADMOB_BANNER_ID)`. `AppNavigation` loads the interstitial with `stringResource(R.string.REAL_ADMOB_INTERSTITIAL_ID)`.
 
 Ad placements:
 - Banner: inside the back-press exit confirmation sheet
-- Interstitial: every 5 tab switches (tracked in `AppNavigation.kt`) and every 3rd icon change (tracked in `SettingsScreen`)
+- Interstitial: every 5 tab switches (`AppNavigation.kt`) and every 3rd icon change (`SettingsScreen`)
 
-> **Google Play Billing and rewarded-ad PRO unlock have been removed.** The `isPro` concept, `BillingRepository`, `RewardedAdManager`, `PaywallBottomSheet`, and `ProBadgeOverlay` no longer exist.
+> Google Play Billing and rewarded-ad PRO unlock have been fully removed.
 
 ### In-app Review (Play Core)
-`ReviewManagerFactory.create(activity)` is called in two places:
-- `LightScreen`: fires when the user confirms a timer start (inside `TimerBottomSheet.onStart`)
-- `SettingsScreen`: fires when the user taps the "리뷰 남기기" setting row
+Triggered in two places: `LightScreen` (on timer start confirm) and `SettingsScreen` (on "리뷰 남기기" tap).
 
 ---
 
 ## Bottom Sheets
 
-All bottom sheets use `ModalBottomSheet` (Material3). Pattern:
+All bottom sheets use `ModalBottomSheet` (Material3):
 
 ```kotlin
 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -325,7 +322,7 @@ ModalBottomSheet(
 ) { ... }
 ```
 
-`skipPartiallyExpanded = true` is required on all sheets so a single downward swipe closes them directly.
+`skipPartiallyExpanded = true` is required on all sheets.
 
 ---
 
@@ -345,8 +342,3 @@ ModalBottomSheet(
 - Custom icon always saved as `filesDir/custom_icon.jpg`
 - EXIF orientation corrected before saving using `android.media.ExifInterface`
 - `rotateBitmap()` private top-level function in `SettingsScreen.kt` handles all 7 EXIF orientations
-
-### Device Admin
-- `MoodLightDeviceAdminReceiver` is a minimal empty subclass of `DeviceAdminReceiver`
-- Only the `force-lock` policy is declared — no other device admin capabilities
-- Always check `dpm.isAdminActive(adminComponent)` before calling `lockNow()`
