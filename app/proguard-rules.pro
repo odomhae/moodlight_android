@@ -1,21 +1,14 @@
 # Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ---------------------------------------------------------------------------
+# SoundType enum
+# DataStore에 enum 상수 이름을 문자열로 저장 (SoundType.entries.find { it.name == savedName })
+# R8이 상수명을 난독화하면 저장된 값과 매칭 불가 → 이름 반드시 보존
+# ---------------------------------------------------------------------------
+-keepnames class com.odom.moodlight.data.model.SoundType
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ---------------------------------------------------------------------------
+# Stack trace 가독성 (크래시 리포트용)
+# ---------------------------------------------------------------------------
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
