@@ -20,10 +20,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.odom.moodlight.R
 import com.odom.moodlight.ui.theme.AppColors
 import kotlin.math.roundToInt
 
@@ -56,7 +58,7 @@ fun ColorPaletteSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "색상 선택",
+                stringResource(R.string.color_palette_title),
                 fontSize = 16.sp,
                 color = AppColors.TextPrimary,
                 fontWeight = FontWeight.SemiBold,
@@ -73,7 +75,7 @@ fun ColorPaletteSheet(
             )
 
             // Hue slider
-            Text("색조", fontSize = 13.sp, color = AppColors.TextDim)
+            Text(stringResource(R.string.color_hue), fontSize = 13.sp, color = AppColors.TextDim)
             GradientSlider(
                 value = hue / 360f,
                 brush = Brush.horizontalGradient(
@@ -86,7 +88,7 @@ fun ColorPaletteSheet(
             )
 
             // Saturation slider
-            Text("채도", fontSize = 13.sp, color = AppColors.TextDim)
+            Text(stringResource(R.string.color_saturation), fontSize = 13.sp, color = AppColors.TextDim)
             GradientSlider(
                 value = saturation,
                 brush = Brush.horizontalGradient(
@@ -99,7 +101,7 @@ fun ColorPaletteSheet(
             )
 
             // Lightness slider
-            Text("밝기", fontSize = 13.sp, color = AppColors.TextDim)
+            Text(stringResource(R.string.color_lightness), fontSize = 13.sp, color = AppColors.TextDim)
             GradientSlider(
                 value = lightness,
                 brush = Brush.horizontalGradient(
@@ -118,7 +120,7 @@ fun ColorPaletteSheet(
                 colors = ButtonDefaults.buttonColors(containerColor = selectedColor)
             ) {
                 Text(
-                    "이 색상 선택",
+                    stringResource(R.string.color_select_button),
                     color = if (lightness > 0.6f) Color.Black else Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp

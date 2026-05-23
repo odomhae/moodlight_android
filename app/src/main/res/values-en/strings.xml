@@ -13,6 +13,7 @@
     <string name="sound_wave">Waves</string>
     <string name="sound_forest">Forest</string>
     <string name="sound_fire">Fireplace</string>
+    <string name="sound_shhh">Shhh</string>
     <string name="sound_lullaby">Lullaby</string>
     <string name="sound_piano">Piano</string>
     <string name="sound_wind">Wind</string>
@@ -78,13 +79,34 @@
     <string name="settings_recent_colors">Recent Colors</string>
 
 
-    <!-- AdMob -->
-    <string name="TEST_ADMOB_APP_ID">"ca-app-pub-3940256099942544~3347511713</string>
-    <string name="TEST_ADMOB_BANNER_ID">"ca-app-pub-3940256099942544/6300978111"</string>
-    <string name="TEST_ADMOB_INTERSTITIAL_ID">"ca-app-pub-3940256099942544/1033173712"</string>
+    <!-- AdMob Test IDs -->
+    <string name="TEST_ADMOB_APP_ID">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="TEST_ADMOB_BANNER_ID">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="TEST_ADMOB_INTERSTITIAL_ID">ca-app-pub-3940256099942544/1033173712</string>
 
-    <string name="REAL_ADMOB_APP_ID">"ca-app-pub-6729344454320392~8498202032"</string>
-    <string name="REAL_ADMOB_BANNER_ID">"ca-app-pub-6729344454320392/7925459188"</string>
-    <string name="REAL_ADMOB_INTERSTITIAL_ID">"ca-app-pub-6729344454320392/7025338268"</string>
+    <!-- AdMob Real IDs -->
+    <string name="REAL_ADMOB_APP_ID">ca-app-pub-6729344454320392~8498202032</string>
+    <string name="REAL_ADMOB_BANNER_ID">ca-app-pub-6729344454320392/7925459188</string>
+    <string name="REAL_ADMOB_INTERSTITIAL_ID">ca-app-pub-6729344454320392/7025338268</string>
+
+    <!-- AppNavigation exit sheet -->
+    <string name="exit_sheet_title">Exit the app?</string>
+    <string name="exit_sheet_subtitle">Your baby\'s sleep environment will be closed.</string>
+    <string name="exit_button">Exit</string>
+    <string name="exit_continue_button">Keep Using</string>
+
+    <!-- Notification channel & foreground service -->
+    <string name="notification_channel_name">Night Light Audio</string>
+    <string name="notification_channel_description">Background sound playback</string>
+    <string name="notification_title">Baby Night Light</string>
+    <string name="notification_content">Sound is playing</string>
+
+    <!-- Color palette sheet -->
+    <string name="color_palette_title">Select Color</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_lightness">Brightness</string>
+    <string name="color_select_button">Select this color</string>
+    <string name="color_add_description">Add color</string>
 
 </resources>

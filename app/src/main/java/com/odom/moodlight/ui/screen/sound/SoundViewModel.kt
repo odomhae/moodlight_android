@@ -50,8 +50,10 @@ class SoundViewModel @Inject constructor(
         val isStopping = state.value.currentTrackIndex == index
         soundPlayer.toggleLullaby(track, soundPlayer.lullabyTracks)
         viewModelScope.launch {
-            if (isStopping) settingsRepository.setSavedSound("NONE", "")
-            else settingsRepository.setSavedSound("LULLABY", "")
+            // savedSoundName(백색소음 이름)은 덮어쓰지 않고 유지
+            val savedName = settingsRepository.savedSoundName.first()
+            if (isStopping) settingsRepository.setSavedSound("NONE", savedName)
+            else settingsRepository.setSavedSound("LULLABY", savedName)
         }
     }
 
@@ -59,7 +61,8 @@ class SoundViewModel @Inject constructor(
         val isStopping = state.value.activeWhiteNoise == sound
         soundPlayer.toggleWhiteNoise(sound)
         viewModelScope.launch {
-            if (isStopping) settingsRepository.setSavedSound("NONE", "")
+            // 중지할 때도 sound.name을 유지해 조명탭에서 복원 가능하도록
+            if (isStopping) settingsRepository.setSavedSound("NONE", sound.name)
             else settingsRepository.setSavedSound("WHITE_NOISE", sound.name)
         }
     }

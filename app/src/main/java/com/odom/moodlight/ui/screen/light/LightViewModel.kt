@@ -227,17 +227,19 @@ class LightViewModel @Inject constructor(
         viewModelScope.launch {
             when {
                 activeLullabyIndex != null -> {
-                    // 자장가 재생 중 → 소리 꺼짐
+                    // 자장가 재생 중 → 소리 꺼짐 (백색소음 이름은 보존)
                     soundPlayer.stopAll()
-                    settingsRepository.setSavedSound("NONE", "")
+                    val savedName = settingsRepository.savedSoundName.first()
+                    settingsRepository.setSavedSound("NONE", savedName)
                 }
                 activeWhiteNoise != null -> {
-                    // 백색소음 재생 중 → 자장가로 전환
+                    // 백색소음 재생 중 → 자장가로 전환 (백색소음 이름 보존)
+                    val whiteNoiseName = activeWhiteNoise.name
                     soundPlayer.stopWhiteNoise()
                     val tracks = soundPlayer.lullabyTracks
                     if (tracks.isNotEmpty()) {
                         soundPlayer.playLullaby(tracks[0], tracks)
-                        settingsRepository.setSavedSound("LULLABY", "")
+                        settingsRepository.setSavedSound("LULLABY", whiteNoiseName)
                     }
                 }
                 else -> {

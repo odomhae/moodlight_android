@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.odom.moodlight.R
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -133,7 +135,7 @@ private fun AddColorDot(onClick: () -> Unit) {
     ) {
         Icon(
             Icons.Default.Add,
-            contentDescription = "색상 추가",
+            contentDescription = stringResource(R.string.color_add_description),
             tint = AppColors.TextDim,
             modifier = Modifier.size(20.dp)
         )

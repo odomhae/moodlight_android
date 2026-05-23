@@ -192,14 +192,14 @@ fun LightScreen(
                     Text(
                         stringResource(R.string.light_cancel),
                         color = onBackground.copy(alpha = 0.5f),
-                        fontSize = 13.sp
+                        fontSize = 16.sp
                     )
                 }
             } else {
                 TextButton(onClick = { showTimerSheet = true }) {
                     Text(
                         text = stringResource(R.string.light_timer_title),
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         color = onBackground.copy(alpha = 0.5f)
                     )
                 }
@@ -211,7 +211,7 @@ fun LightScreen(
             ) {
                 Text(
                     text = state.soundButtonEmoji,
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
                     color = onBackground.copy(alpha = if (state.isSoundActive) 0.9f else 0.4f)
                 )
             }
@@ -231,15 +231,15 @@ fun LightScreen(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = null,
-                    tint = onBackground.copy(alpha = 0.4f),
+                    tint = onBackground.copy(alpha = 0.6f),
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(32.dp)
                         .offset(y = hintBounce.dp)
                 )
                 Text(
                     text = stringResource(R.string.light_swipe_hint),
-                    fontSize = 13.sp,
-                    color = onBackground.copy(alpha = 0.3f)
+                    fontSize = 16.sp,
+                    color = onBackground.copy(alpha = 0.6f)
                 )
             }
         }

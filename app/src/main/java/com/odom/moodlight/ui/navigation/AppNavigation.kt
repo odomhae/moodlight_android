@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.annotation.StringRes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,10 +35,10 @@ import com.odom.moodlight.ui.screen.settings.SettingsScreen
 import com.odom.moodlight.ui.screen.sound.SoundScreen
 import com.odom.moodlight.ui.theme.AppColors
 
-sealed class Screen(val route: String, val emoji: String, val label: String) {
-    data object Light : Screen("light", "💡", "조명")
-    data object Sound : Screen("sound", "🎵", "사운드")
-    data object Settings : Screen("settings", "⚙️", "설정")
+sealed class Screen(val route: String, val emoji: String, @StringRes val labelRes: Int) {
+    data object Light : Screen("light", "💡", R.string.tab_light)
+    data object Sound : Screen("sound", "🎵", R.string.tab_sound)
+    data object Settings : Screen("settings", "⚙️", R.string.tab_settings)
 }
 
 private val screens = listOf(Screen.Light, Screen.Sound, Screen.Settings)
@@ -110,7 +111,7 @@ fun AppNavigation() {
                             }
                         },
                         icon = { Text(text = screen.emoji, fontSize = 20.sp) },
-                        label = { Text(screen.label, fontSize = 11.sp) },
+                        label = { Text(stringResource(screen.labelRes), fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedTextColor = AppColors.WarmYellow,
                             unselectedTextColor = AppColors.TextDim,
@@ -154,14 +155,14 @@ fun AppNavigation() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "앱을 종료할까요?",
+                    stringResource(R.string.exit_sheet_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AppColors.TextPrimary
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "아이의 수면 환경이 꺼집니다",
+                    stringResource(R.string.exit_sheet_subtitle),
                     fontSize = 14.sp,
                     color = AppColors.TextDim
                 )
@@ -173,14 +174,14 @@ fun AppNavigation() {
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.SoftPink.copy(alpha = 0.8f))
                 ) {
-                    Text("종료", color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.exit_button), color = AppColors.Background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = { showExitSheet = false },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("계속 사용", color = AppColors.TextPrimary, fontSize = 16.sp)
+                    Text(stringResource(R.string.exit_continue_button), color = AppColors.TextPrimary, fontSize = 16.sp)
                 }
             }
         }

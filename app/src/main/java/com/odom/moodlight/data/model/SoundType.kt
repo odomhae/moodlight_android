@@ -10,7 +10,6 @@ enum class SoundType(
 ) {
     RAIN("🌧️", R.string.sound_rain, "rain.mp3"),
     WAVE("🌊", R.string.sound_wave, "wave.mp3"),
-    FOREST("🌲", R.string.sound_forest, "forest.mp3"),
-    FIRE("🔥", R.string.sound_fire, "fire.mp3"),
-    WIND("🌬️", R.string.sound_wind, "wind.mp3"),
+    FOREST("🌲", R.string.sound_forest, "birds.mp3"),
+    SHHH("💋", R.string.sound_shhh, "Shhh.m4a"),
 }

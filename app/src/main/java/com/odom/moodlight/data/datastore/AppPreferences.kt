@@ -85,7 +85,7 @@ class AppPreferences @Inject constructor(
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
             val stored = prefs[KEY_VISUAL_PATTERN]
-            if (stored.isNullOrEmpty() || stored == "none") "candle_flicker" else stored
+            if (stored.isNullOrEmpty() || stored == "none") "starlight" else stored
         }
 
     val selectedColorArgb: Flow<Long> = store.data

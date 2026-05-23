@@ -13,6 +13,7 @@
     <string name="sound_wave">파도 소리</string>
     <string name="sound_forest">숲 소리</string>
     <string name="sound_fire">모닥불</string>
+    <string name="sound_shhh">쉬이이</string>
     <string name="sound_lullaby">자장가</string>
     <string name="sound_piano">피아노</string>
     <string name="sound_wind">바람 소리</string>
@@ -73,15 +74,35 @@
     <string name="settings_recent_colors">최근 선택한 색상</string>
 
 
-    <!-- AdMob -->
-    <string name="TEST_ADMOB_APP_ID">"ca-app-pub-3940256099942544~3347511713</string>
-    <string name="TEST_ADMOB_BANNER_ID">"ca-app-pub-3940256099942544/6300978111"</string>
-    <string name="TEST_ADMOB_INTERSTITIAL_ID">"ca-app-pub-3940256099942544/1033173712"</string>
+    <!-- AdMob Test IDs -->
+    <string name="TEST_ADMOB_APP_ID">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="TEST_ADMOB_BANNER_ID">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="TEST_ADMOB_INTERSTITIAL_ID">ca-app-pub-3940256099942544/1033173712</string>
 
+    <!-- AdMob Real IDs -->
+    <string name="REAL_ADMOB_APP_ID">ca-app-pub-6729344454320392~8498202032</string>
+    <string name="REAL_ADMOB_BANNER_ID">ca-app-pub-6729344454320392/7925459188</string>
+    <string name="REAL_ADMOB_INTERSTITIAL_ID">ca-app-pub-6729344454320392/7025338268</string>
 
-    <string name="REAL_ADMOB_APP_ID">"ca-app-pub-6729344454320392~8498202032"</string>
-    <string name="REAL_ADMOB_BANNER_ID">"ca-app-pub-6729344454320392/7925459188"</string>
-    <string name="REAL_ADMOB_INTERSTITIAL_ID">"ca-app-pub-6729344454320392/7025338268"</string>
+    <!-- AppNavigation exit sheet -->
+    <string name="exit_sheet_title">앱을 종료할까요?</string>
+    <string name="exit_sheet_subtitle">수면 환경이 종료됩니다</string>
+    <string name="exit_button">종료</string>
+    <string name="exit_continue_button">계속 사용</string>
+
+    <!-- Notification channel & foreground service -->
+    <string name="notification_channel_name">야간등 오디오</string>
+    <string name="notification_channel_description">백그라운드 사운드 재생</string>
+    <string name="notification_title">아기 야간등</string>
+    <string name="notification_content">사운드 재생 중</string>
+
+    <!-- Color palette sheet -->
+    <string name="color_palette_title">색상 선택</string>
+    <string name="color_hue">색조</string>
+    <string name="color_saturation">채도</string>
+    <string name="color_lightness">밝기</string>
+    <string name="color_select_button">이 색상 선택</string>
+    <string name="color_add_description">색상 추가</string>
 
 
 </resources>

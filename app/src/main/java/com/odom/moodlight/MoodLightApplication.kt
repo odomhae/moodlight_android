@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.android.gms.ads.MobileAds
+import com.odom.moodlight.R
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -18,10 +19,10 @@ class MoodLightApplication : Application() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             AUDIO_CHANNEL_ID,
-            "야간등 오디오",
+            getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "백그라운드 사운드 재생"
+            description = getString(R.string.notification_channel_description)
             setShowBadge(false)
         }
         val manager = getSystemService(NotificationManager::class.java)

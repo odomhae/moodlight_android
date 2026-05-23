@@ -52,8 +52,8 @@ class AudioService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, MoodLightApplication.AUDIO_CHANNEL_ID)
-            .setContentTitle("아기 야간등")
-            .setContentText("사운드 재생 중")
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(getString(R.string.notification_content))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(pendingIntent)
             .setSilent(true)
